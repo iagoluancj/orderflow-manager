@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,6 +6,26 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+    /* Cores  gerais*/
+  --primary: #e5484d;
+  --secondary: #0072ff;
+  --realce: #f1a94e;
+  --realceHover: #ec8609;
+  --textoNeutro: #333333;
+  --whiteSuave: #f7f7f7;
+  --darkRed: #472829a9;
+  --backgroundPrimary: #3f3f3f;
+
+    /* tela inicial e painel de pedidos */
+  --gradientPrincipal:  linear-gradient(135deg, #3f3f3f, #e5484d, #f1a94e, #ec8609);
+  --gradientRedGradient: linear-gradient(135deg, #e5484d, #f1a94e);
+  --buttonsBlueGradient: linear-gradient(135deg, #0072ff, #00c6ff);
+
+    /* Status do pedido */
+  --emFila: #f1a94e;
+  --emAndamento: #0072ff;
+  --concluido: linear-gradient(135deg, #00c6ff, #6dffb3);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -16,6 +37,5 @@
 
 body {
   color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--backgroundPrimary);
 }
