@@ -1,16 +1,20 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { ButtonOpenCancel, ButtonOpenConfirm, ContainerItensQT, ContainerMesaOpen, DropdownMenu, ItensQT, MenuButton, NavBar, NavButton, NavButtonMesa, NavButtonOrder, NavLink, NavLinks, NavLogo, NavMenu } from './styles';
+import { ButtonOpenCancel, ButtonOpenConfirm, CartOpen, CartOpenContainer, ContainerItensQT, ContainerMesaOpen, DropdownMenu, ItensQT, MenuButton, NavBar, NavButton, NavButtonMesa, NavButtonOrder, NavLink, NavLinks, NavLogo, NavMenu } from './styles';
 import { LuLogOut } from 'react-icons/lu';
 import { useRouter } from 'next/navigation';
 import logo from '../../assets/logo.png'
 import Image from 'next/image';
 import { FaOpencart, FaShoppingBasket } from 'react-icons/fa';
-import { IoMdMenu } from 'react-icons/io';
+import { IoIosAdd, IoIosRemove, IoMdMenu } from 'react-icons/io';
 import { CartItem, TypePedido } from '@/Types/types';
 import Cookies from "js-cookie";
 import { SupaContext } from '@/Context';
 import { toast } from 'react-toastify';
 import { MdOutlineTableBar } from 'react-icons/md';
+import { MenuItem, MenuItemDescription, MenuItemDetails, MenuItemImage, MenuItemPrice, MenuItemQuantity, MenuItemQuantityContainer, MenuItemTitle, SpanAdd, Title } from '../Cardapio/styles';
+
+import itemSeila from '../../assets/item.png'
+
 
 interface NavbarProps {
     message: string;
@@ -23,8 +27,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isOrderOpen, setIsOrderOpen] = useState(false);
     const [isMesaOpen, setIsMesaOpen] = useState(false);
-   
-    const { cart, contextPedidos, updateCartItem, clearCart } = useContext(SupaContext);
+
+    const { cart, contextPedidos, updateCartItem, addItemToCart, removeItemFromCart, clearCart } = useContext(SupaContext);
     const [novaMesa, setNovaMesa] = useState(Cookies.get("mesa") || "");
     const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -49,7 +53,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
 
     const handleFinalizarPedido = async () => {
         const mesa = Cookies.get("mesa");
-        const user_id = Cookies.get('user_id'); 
+        const user_id = Cookies.get('user_id');
 
         if (!user_id) {
             toast.success('Cliente não autenticado. Faça login novamente.');
@@ -166,70 +170,89 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
                 </NavMenu>
             </NavBar>
             {isCartOpen && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        width: '100vw',
-                        height: '100vh',
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        zIndex: 1000,
-                    }}
+                <CartOpenContainer
                 >
-                    <div
+                    <CartOpen
                         style={{
                             backgroundColor: '#3F3F3F',
                             padding: '20px',
                             borderRadius: '8px',
                             width: '95%',
                             maxWidth: '500px',
-                            textAlign: 'center',
                         }}
                     >
-                        <h2>Seu carrinho</h2>
+                        <Title> <FaOpencart /> Seu carrinho</Title>
 
-                        <div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '1rem',
+                            }}
+                        >
                             {cart.length > 0 ? (
-                                cart.map((item: CartItem) => (
-                                    <div key={item.id}>
-                                        <p>{item.nome}</p>
-                                        <p>{`Quantidade: ${item.quantidade}`}</p>
-                                        <p>{`Preço Total: R$ ${(item.quantidade * item.preco).toFixed(2)}`}</p>
-                                        <input
-                                            value={item.observacao || ''} 
-                                            placeholder="Adicione uma observação"
-                                            onChange={e => handleObservacaoChange(item.id, e.target.value)}
-                                            style={{
-                                                width: '100%',
-                                                padding: '8px',
-                                                color: '#000',
-                                                marginTop: '8px',
-                                                borderRadius: '4px',
-                                                border: '1px solid #ccc',
-                                            }}
-                                        />                                    </div>
-                                ))
+                                cart.map((item: CartItem) => {
+                                    const cartItem = cart.find((cartItem) => cartItem.id === item.id);
+
+                                    return (
+                                        <MenuItem key={item.id}>
+                                            <MenuItemImage><Image src={itemSeila} alt={`Image item ${item.nome}`}></Image></MenuItemImage>
+                                            <MenuItemDetails>
+                                                <MenuItemTitle>{item.nome}</MenuItemTitle>
+                                                <MenuItemDescription>Delicioso hamburguer engana vegano, vai com duas carnes</MenuItemDescription>
+                                                <MenuItemQuantityContainer>
+                                                    <MenuItemQuantity> <SpanAdd onClick={() => removeItemFromCart(item.id)}> <IoIosRemove />   </SpanAdd>{cartItem ? cartItem.quantidade.toString().padStart(2, '0') : '00'} unidades <SpanAdd onClick={() => addItemToCart(item)}> <IoIosAdd /> </SpanAdd></MenuItemQuantity>
+                                                    <MenuItemPrice>
+                                                        R$ {cartItem
+                                                            ? (Number(item.preco) * cartItem.quantidade).toFixed(2).replace('.', ',')
+                                                            : Number(item.preco).toFixed(2).replace('.', ',')} Total
+                                                    </MenuItemPrice>
+                                                </MenuItemQuantityContainer>
+                                                <input
+                                                    value={item.observacao || ''}
+                                                    placeholder="Observações"
+                                                    onChange={e => handleObservacaoChange(item.id, e.target.value)}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px',
+                                                        color: '#000',
+                                                        marginTop: '8px',
+                                                        borderRadius: '4px',
+                                                        outline: '1px solid #f1a94e',
+                                                        border: '1px solid #ccc',
+                                                    }}
+                                                />
+                                            </MenuItemDetails>
+                                        </MenuItem>
+                                    )
+                                })
                             ) : (
                                 <p>O carrinho está vazio</p>
-                            )}
-                            {cart.length > 0 && (
-                                <ButtonOpenConfirm
-                                    onClick={handleFinalizarPedido}
-                                    style={{ marginTop: '20px', padding: '10px 20px', backgroundColor: '#4CAF50', color: '#fff', border: 'none', borderRadius: '5px' }}
-                                >
-                                    Finalizar Pedido
-                                </ButtonOpenConfirm>
-                            )}
+                            )
+                            }
                         </div>
-                        <ButtonOpenCancel onClick={toggleCart} style={{ marginTop: '20px', padding: '10px 20px' }}>
-                            Fechar
-                        </ButtonOpenCancel>
-                    </div>
-                </div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '1rem',
+                            }}
+                        >
+                            <ButtonOpenConfirm
+                                onClick={handleFinalizarPedido}
+                                style={{ backgroundColor: '#4CAF50', color: '#fff', border: 'none', borderRadius: '5px', padding: '8px' }}
+                            >
+                                Finalizar Pedido
+                            </ButtonOpenConfirm>
+
+                            <ButtonOpenCancel onClick={toggleCart} style={{ padding: '8px' }}>
+                                Fechar
+                            </ButtonOpenCancel>
+                        </div>
+                    </CartOpen>
+                </CartOpenContainer>
             )}
             {isOrderOpen && (
                 <div

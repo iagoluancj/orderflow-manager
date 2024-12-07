@@ -1,5 +1,9 @@
 import styled from "styled-components";
 
+interface loading {
+  $isLoading: boolean;
+}
+
 export const CatalogContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -22,9 +26,13 @@ export const Title = styled.h1`
   color: var(--whiteSuave);
   text-align: start;
   font-weight: 600;
+
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 `;
 
-export const ButtonChamarGarcom = styled.button`
+export const ButtonChamarGarcom = styled.button<loading>`
     display: flex;
     justify-content: center;
     align-items: center;
@@ -44,13 +52,15 @@ export const ButtonChamarGarcom = styled.button`
     border-left: solid 1px white;
     border-right: solid 1px white;
 
-    &:active {
+    ${({ $isLoading }) =>
+    $isLoading &&
+    `
       background: var(--whiteSuave);
       color: var(--realce);
       border-top: solid 1px #f1a94e;
       border-left: solid 1px #f1a94e;
       border-right: solid 1px #f1a94e;
-    }
+  `}
 `;
 
 export const MenuContainerWrapper = styled.div`
@@ -254,9 +264,11 @@ export const CategoriesContainer = styled.div`
   padding: 0rem 2rem;
   display: flex;
   flex-direction: column;
-
   max-width: 500px;
-`;
+
+  @media (max-width: 600px) {
+    max-width: 350px;
+  }`;
 
 export const CategoriesHeader = styled.div`
   display: flex;
@@ -281,6 +293,10 @@ export const ViewMore = styled.span`
     font-size: 1.8rem;
     margin-top: -5px;
   }
+`;
+
+export const H3 = styled.h3`
+  font-weight: 12px;
 `;
 
 export const CategoriesList = styled.div`
@@ -398,6 +414,13 @@ export const MenuItemQuantityContainer = styled.div`
     display: flex;
     flex-direction: row-reverse;
     justify-content: space-between;
+
+    @media (max-width: 390px) {
+      flex-wrap: wrap-reverse;
+      align-items: center;
+      justify-content: center; 
+      gap: .5rem;
+    }
 `;
 
 export const MenuItemQuantity = styled.div`

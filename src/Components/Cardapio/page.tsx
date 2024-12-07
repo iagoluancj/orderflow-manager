@@ -27,6 +27,8 @@ export default function Cardapio() {
 
   const callWaiter = async () => {
     setLoading(true);
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     try {
       const response = await fetch("/api/waiter-request", {
         method: "POST",
@@ -47,18 +49,18 @@ export default function Cardapio() {
       console.error("Erro ao chamar o garçom:", error);
       toast.error("Erro ao se conectar ao servidor.");
     } finally {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 1500);
     }
   };
 
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch("/api/produtos/get"); 
+        const response = await fetch("/api/produtos/get");
         const data = await response.json();
 
         if (response.ok) {
-          setItems(data.produtos); 
+          setItems(data.produtos);
         } else {
           console.error("Erro ao buscar produtos:", data.message);
         }
@@ -129,7 +131,7 @@ export default function Cardapio() {
         </CategoriesContainer>
         <MenuContainer>
           <MenuTitle>Cardápio</MenuTitle>
-          <h1>Preferidos</h1>
+          <H3>Preferidos</H3>
           <MenuList>
             {items.map((item: Produto) => {
               const cartItem = cart.find((cartItem) => cartItem.id === item.id);
@@ -173,6 +175,29 @@ export default function Cardapio() {
               </MenuItemDetails>
             </MenuItem> */}
           </MenuList>
+          <h1>Massas</h1>
+          <MenuList>
+            {items.map((item: Produto) => {
+              const cartItem = cart.find((cartItem) => cartItem.id === item.id);
+
+              return (
+                <MenuItem key={item.id}>
+                  <MenuItemImage><Image src={itemSeila} alt={`Image item ${item.nome}`}></Image></MenuItemImage>
+                  <MenuItemDetails>
+                    <MenuItemTitle>{item.nome}</MenuItemTitle>
+                    <MenuItemDescription>Delicioso hamburguer engana vegano, vai com duas carnes</MenuItemDescription>
+                    <MenuItemQuantityContainer>
+                      <MenuItemQuantity> <SpanAdd onClick={() => removeItemFromCart(item.id)}> <IoIosRemove />   </SpanAdd>{cartItem ? cartItem.quantidade.toString().padStart(2, '0') : '00'}<SpanAdd onClick={() => addItemToCart(item)}> <IoIosAdd /> </SpanAdd></MenuItemQuantity>
+                      <MenuItemPrice>
+                        R$ {Number(item.preco).toFixed(2).replace('.', ',')} Un.
+                      </MenuItemPrice>
+                    </MenuItemQuantityContainer>
+                  </MenuItemDetails>
+                </MenuItem>
+              )
+            })}
+          </MenuList>
+
         </MenuContainer>
       </Categories>
 
@@ -199,9 +224,9 @@ export default function Cardapio() {
         </MenuWrapper>
       </Container> */}
 
-      <ButtonChamarGarcom onClick={callWaiter} disabled={loading}>
+      <ButtonChamarGarcom onClick={callWaiter} disabled={loading} $isLoading={loading}>
         <FaConciergeBell size={24} />
-        {loading ? "Aguarde..." : "Garçom"}
+        {loading ? "Aguarde.." : "Garçom"}
       </ButtonChamarGarcom>
 
     </CatalogContainer>

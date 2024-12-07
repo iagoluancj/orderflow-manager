@@ -118,25 +118,27 @@ export default function Cliente() {
 
             <ChoosingPadding>
               <ChoosingTable>
-                <Title>Você está em qual mesa?</Title>
+                <Title>É um prazer ter você conosco.</Title>
                 <Description>
+                  Agora, nos diga, você está em qual mesa?
+                  <br />
                   O número da mesa fica em X lugar.
                 </Description>
-                <InputComponent
+                <input type="number" maxLength={10} value={novaMesa} onChange={(e) => setNovaMesa(e.target.value)} placeholder="Informe o número da mesa aqui."/>
+                {/* <InputComponent
                   label="Número da mesa"
                   maxLength={10} 
                   type="number"
                   name="mesa"
                   value={novaMesa} 
                   onChange={(e) => setNovaMesa(e.target.value)} 
-                />
-                <Warning>
-                  <i>Atenção ao selecionar sua mesa, caso esteja incorreta teremos problemas na entrega de pedido.</i>
-                </Warning>
+                /> */}
                 <ConfirmButton onClick={handleSetMesa}>
                   Confirmar mesa
                 </ConfirmButton>
-
+                <Warning>
+                  <i>Atenção ao selecionar sua mesa, caso esteja incorreta teremos problemas na entrega de pedido.</i>
+                </Warning>
                 <FailedChoosingTable>
                   <Description>
                     <button onClick={callWaiter} disabled={loading}>Problemas ao selecionar a mesa? Chame o garçom clicando aqui.</button>

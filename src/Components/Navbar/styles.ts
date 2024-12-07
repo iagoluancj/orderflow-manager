@@ -187,14 +187,40 @@ export const ButtonOpenCancel = styled(NavButton)`
 export const ButtonOpenConfirm = styled(NavButton)`
   width: unset;
   margin: 0rem 0rem;
+  border: 1px solid transparent !important;
 
 &:hover {
     background: transparent !important;
-    border: 1px solid #4CAF50;
-    color: #4CAF50;
-
+    border: 1px solid #4CAF50 !important;
+    color: #4CAF50 !important;
     transform: scale(1.01);
-
     transition: .2s ease-in;
   }
 `
+
+export const CartOpenContainer = styled.div`
+  position: fixed;
+  top: 2rem;
+  left: 0;
+  width: 100vw;
+  height: 100vw;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items:center;
+  z-index: 10;
+`;
+
+export const CartOpen = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background-color: #472829 !important;
+
+  border-top: solid 1px #f1a94e;
+  border-left: solid 1px #f1a94e;
+  border-right: solid 1px #f1a94e;
+
+  gap: 1.5rem;
+`;

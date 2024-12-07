@@ -58,12 +58,39 @@ export const ChoosingTable = styled.div`
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   max-width: 500px;
   width: 100%;
+  gap: 1rem;
 
   border-top: 1px solid var(--realce);
   border-left: 1px solid var(--realce);
   border-right: 1px solid var(--realce);
 
   color: var(--whiteSuave);
+
+  background-color: var(--darkRed);
+
+  input {
+    padding: .8rem;
+    border-radius: 15px;
+    color: #333;
+    width: 100%;
+    border: 1px solid transparent;
+    outline: none;
+
+    &::placeholder {
+      color: #333;
+      padding: .5rem;
+
+      font-weight: 700;
+    }
+
+    &:active {
+      outline: 1px solid var(--realce);
+    }
+
+    &:not(:placeholder-shown) {
+      outline: 1px solid var(--realce); /* Borda fica vermelha se o input tiver valor */
+    }
+  }
 `;
 
 export const ChoosingPadding = styled.div`
