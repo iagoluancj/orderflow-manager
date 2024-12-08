@@ -7,7 +7,6 @@ import { toast } from "react-toastify";
 import NavbarComponent from "@/Components/Navbar";
 import Cardapio from "@/Components/Cardapio/page";
 import { ChoosingPadding, ChoosingTable, ConfirmButton, ContainerChoosingTable, Description, FailedChoosingTable, Title, Warning } from "./styles";
-import InputComponent from "@/Components/Input";
 
 export default function Cliente() {
   const { contextPedidos } = useContext(SupaContext);

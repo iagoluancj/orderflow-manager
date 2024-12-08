@@ -267,7 +267,7 @@ export const CategoriesContainer = styled.div`
   max-width: 500px;
 
   @media (max-width: 600px) {
-    max-width: 350px;
+    max-width: 400px;
   }`;
 
 export const CategoriesHeader = styled.div`
@@ -296,7 +296,8 @@ export const ViewMore = styled.span`
 `;
 
 export const H3 = styled.h3`
-  font-weight: 12px;
+  font-weight: 500;
+  color: var(--realce);
 `;
 
 export const CategoriesList = styled.div`
@@ -343,7 +344,12 @@ export const CategoryItem = styled.div`
   cursor: pointer;
 `;
 
-export const CategoryImage = styled.div``;
+export const CategoryImage = styled.div`
+  img {
+    max-width: 50px;
+    max-height: 50px;
+  }
+`;
 
 export const CategoryTitle = styled.h4``;
 
@@ -403,7 +409,6 @@ export const MenuItemDetails = styled.div`
 export const MenuItemTitle = styled.h4`
   font-weight: 700;
   font-size: 1.4rem;
-  white-space: nowrap;   
 `;
 
 export const MenuItemDescription = styled.div`
@@ -419,7 +424,7 @@ export const MenuItemQuantityContainer = styled.div`
       flex-wrap: wrap-reverse;
       align-items: center;
       justify-content: center; 
-      gap: .5rem;
+      gap: .2rem;
     }
 `;
 
@@ -427,15 +432,12 @@ export const MenuItemQuantity = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  text-align: center;
+  gap: .5rem;
   
 `;
 
 export const MenuItemPrice = styled.span`
-    /* position: absolute;
-    bottom: 0; 
-    right: 0; 
-    margin: 10px; */
 `;
 
 export const SpanAdd = styled.button`
@@ -445,6 +447,6 @@ export const SpanAdd = styled.button`
   cursor: pointer;
 
   svg {
-    color: red;
+    color: black;
   }
 `;

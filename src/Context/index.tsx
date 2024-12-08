@@ -55,7 +55,7 @@ export const SupaContext = createContext<SupaContextType>({
 const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
     const [clientes, setClientes] = useState<TypeCliente[]>([]);
     const [pedidos, setPedidos] = useState<TypePedido[]>([]);
-    const [itensPedido, setItensPedido] = useState<TypeItemPedido[]>([]);
+    const [itensPedido, setItensPedido] = useState<TypeItemPedido[]>([]); //Essa não é a melhor forma, a melhor forma é buscar o pedido por id. 
     const [produtos, setProdutos] = useState<TypeProduto[]>([]);
     const [funcionarios, setFuncionarios] = useState<TypeFuncionario[]>([]);
     const [cozinha, setCozinha] = useState<TypeCozinha[]>([]);
@@ -201,6 +201,16 @@ const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
             return { pedidosData };
         };
 
+        const getAllItensPedido = async () => {
+            const { data: itensPedidoData } = await supabase
+                .from('itenspedido')
+                .select('*')
+                .order('id', { ascending: true })
+                .returns<TypeItemPedido[]>();
+
+            return { itensPedidoData };
+        };
+
         (async () => {
             const { clienteData } = await getAllClientes();
             setClientes(clienteData || []);
@@ -210,6 +220,9 @@ const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
 
             const { pedidosData } = await getAllPedidos();
             setPedidos(pedidosData || []);
+            
+            const { itensPedidoData } = await getAllItensPedido();
+            setItensPedido(itensPedidoData || []);
         })();
 
         const clientesChannel = supabase
@@ -260,10 +273,27 @@ const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
             )
             .subscribe();
 
+            const itensPedidoChannel = supabase
+            .channel('itenspedido-db-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'itenspedido',
+                },
+                (payload) => {
+                    console.log('Change received for funcionarios:', payload);
+                    getAllItensPedido().then(({ itensPedidoData }) => setItensPedido(itensPedidoData || []));
+                }
+            )
+            .subscribe();
+
         return () => {
             clientesChannel.unsubscribe();
             funcChannel.unsubscribe();
             pedidoChannel.unsubscribe();
+            itensPedidoChannel.unsubscribe();
         };
     }, []);
 

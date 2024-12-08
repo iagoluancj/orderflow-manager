@@ -197,7 +197,11 @@ export default function Login() {
       }
     };
 
-    checkAuthToken();
+    const intervalId = setInterval(() => {
+      checkAuthToken();
+    }, 3000); 
+
+    return () => clearInterval(intervalId);
   }, [contextFuncionarios, router]);
 
   return (

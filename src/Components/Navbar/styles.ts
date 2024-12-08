@@ -1,3 +1,4 @@
+import { Title } from "@/app/auth/cliente/styles";
 import styled from "styled-components";
 
 // Simples navbar; 
@@ -6,7 +7,7 @@ export const NavBar = styled.nav`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #e5484d, #f1a94e);
+  background: #ec8609;
   padding: .5rem 1rem;
   width: 100%;
   color: white;
@@ -196,20 +197,37 @@ export const ButtonOpenConfirm = styled(NavButton)`
     transform: scale(1.01);
     transition: .2s ease-in;
   }
+
+  &:disabled {
+    cursor: not-allowed;
+    background: #3c3c3c !important;
+      border: 1px solid #3c3c3c !important;
+      color: white !important;
+      transition: .2s ease-in;
+  }
 `
 
 export const CartOpenContainer = styled.div`
   position: fixed;
-  top: 2rem;
-  left: 0;
+  top: 0; 
+  left: 50%;
+  transform: translateX(-50%); 
   width: 100vw;
-  height: 100vw;
+  height: 100vh; 
   display: flex;
-  gap: 1rem;
   justify-content: center;
-  align-items:center;
+  align-items: flex-start; 
   z-index: 10;
+  padding: 1rem; 
+  overflow-y: auto; 
+
+  @media (max-height: 600px) {
+    height: auto; 
+    max-height: 100vh; 
+    overflow-y: auto;
+  }
 `;
+
 
 export const CartOpen = styled.div`
   display: flex;
@@ -223,4 +241,39 @@ export const CartOpen = styled.div`
   border-right: solid 1px #f1a94e;
 
   gap: 1.5rem;
+`;
+
+export const OrdersContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  justify-content: center;
+  align-items: center;
+
+  border-top: solid 1px #e5484d;
+  border-left: solid 1px #e5484d;
+  border-right: solid 1px #e5484d;
+  margin-bottom: .5rem;
+  padding: 1rem;
+
+  gap: 1.5rem;
+`;
+
+export const Orders = styled.div`
+  width: 100%;
+`;
+
+export const Order = styled.div`
+  width: 100%;
+  margin-bottom: 1rem;
+  border: 1px solid red;
+`;
+
+export const TitleOrder = styled(Title)`
+  font-size: 1rem;
+`;
+
+export const LiOrderItens = styled.li`
+  font-size: 1rem;
+  padding: 0rem 1rem;
 `;

@@ -1,6 +1,6 @@
 "use client"
 import NavbarComponent from "@/Components/Navbar";
-import { ButtonChamarGarcom, CatalogContainer, Categories, CategoriesContainer, CategoriesHeader, CategoriesList, CategoriesTitle, CategoryImage, CategoryItem, CategoryTitle, Header, HeaderContent, HeaderTexts, HeaderTitle, MenuContainer, MenuItem, MenuItemDescription, MenuItemDetails, MenuItemImage, MenuItemPrice, MenuItemQuantity, MenuItemQuantityContainer, MenuItemTitle, MenuList, MenuTitle, SearchBar, SpanAdd, StyledInput } from "./styles";
+import { ButtonChamarGarcom, CatalogContainer, Categories, CategoriesContainer, CategoriesHeader, CategoriesList, CategoriesTitle, CategoryImage, CategoryItem, CategoryTitle, H3, Header, HeaderContent, HeaderTexts, HeaderTitle, MenuContainer, MenuItem, MenuItemDescription, MenuItemDetails, MenuItemImage, MenuItemPrice, MenuItemQuantity, MenuItemQuantityContainer, MenuItemTitle, MenuList, MenuTitle, SearchBar, SpanAdd, StyledInput } from "./styles";
 import { useContext, useEffect, useState } from "react";
 import { Produto, TypeProduto } from "@/Types/types";
 import { toast } from "react-toastify";
@@ -13,6 +13,9 @@ import Image from "next/image";
 import carnes from '../../assets/Carnes.png'
 import massas from '../../assets/massas.png'
 import pizzas from '../../assets/Pizza.png'
+import hamburguer from '../../assets/hamburguer.png'
+import others from '../../assets/others.png'
+
 import itemSeila from '../../assets/item.png'
 import { SupaContext } from "@/Context";
 import { IoIosAdd, IoIosRemove } from "react-icons/io";
@@ -21,6 +24,7 @@ import { IoIosAdd, IoIosRemove } from "react-icons/io";
 export default function Cardapio() {
   const { cart, addItemToCart, removeItemFromCart } = useContext(SupaContext);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [items, setItems] = useState<TypeProduto>([]);
   const mesaId = Cookies.get("mesa");
 
@@ -52,6 +56,10 @@ export default function Cardapio() {
       setTimeout(() => setLoading(false), 1500);
     }
   };
+
+  const filteredItems = items.filter((item) =>
+    item.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   useEffect(() => {
     async function fetchProducts() {
@@ -87,7 +95,11 @@ export default function Cardapio() {
           </HeaderTexts>
           <SearchBar>
             <span><CiSearch size={30} /></span>
-            <StyledInput type="text" placeholder="Qual comida você está procurando?" />
+            <StyledInput
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Nos diga o que você gostaria de saborear hoje!" />
           </SearchBar>
           {/* <HeaderDescription>
             Escolha, personalize e finalize seus pedidos sem complicações.
@@ -97,66 +109,76 @@ export default function Cardapio() {
       </Header>
 
       <Categories>
-        <CategoriesContainer>
-          <CategoriesHeader>
-            <CategoriesTitle> Categorias </CategoriesTitle>
-            {/* <ViewMore>Ver mais <span>+</span></ViewMore> */}
-          </CategoriesHeader>
-          <CategoriesList>
-            <CategoryItem>
-              <CategoryImage><Image src={massas} alt="Icone de massas"></Image></CategoryImage>
-              <CategoryTitle>Massas</CategoryTitle>
-            </CategoryItem>
-            <CategoryItem>
-              <CategoryImage><Image src={pizzas} alt="Icone de massas"></Image></CategoryImage>
-              <CategoryTitle>Pizzas</CategoryTitle>
-            </CategoryItem>
-            <CategoryItem>
-              <CategoryImage><Image src={carnes} alt="Icone de massas"></Image></CategoryImage>
-              <CategoryTitle>Carnes</CategoryTitle>
-            </CategoryItem>
-            <CategoryItem>
-              <CategoryImage><Image src={massas} alt="Icone de massas"></Image></CategoryImage>
-              <CategoryTitle>Hamburguer</CategoryTitle>
-            </CategoryItem>
-            <CategoryItem>
-              <CategoryImage><Image src={massas} alt="Icone de massas"></Image></CategoryImage>
-              <CategoryTitle>Outros</CategoryTitle>
-            </CategoryItem>
-            <CategoryItem>
-              <CategoryImage><Image src={massas} alt="Icone de massas"></Image></CategoryImage>
-              <CategoryTitle>Outros</CategoryTitle>
-            </CategoryItem>
-          </CategoriesList>
-        </CategoriesContainer>
+        {
+          searchTerm || filteredItems.length === 0 ? (
+            <span></span>
+          ) : (
+            <CategoriesContainer>
+              <CategoriesHeader>
+                <CategoriesTitle> Categorias </CategoriesTitle>
+                {/* <ViewMore>Ver mais <span>+</span></ViewMore> */}
+              </CategoriesHeader>
+              <CategoriesList>
+                <CategoryItem>
+                  <CategoryImage><Image src={massas} alt="Icone de massas"></Image></CategoryImage>
+                  <CategoryTitle>Massas</CategoryTitle>
+                </CategoryItem>
+                <CategoryItem>
+                  <CategoryImage><Image src={pizzas} alt="Icone de massas"></Image></CategoryImage>
+                  <CategoryTitle>Pizzas</CategoryTitle>
+                </CategoryItem>
+                <CategoryItem>
+                  <CategoryImage><Image src={carnes} alt="Icone de massas"></Image></CategoryImage>
+                  <CategoryTitle>Carnes</CategoryTitle>
+                </CategoryItem>
+                <CategoryItem>
+                  <CategoryImage><Image src={hamburguer} alt="Icone de hamburguer"></Image></CategoryImage>
+                  <CategoryTitle>Hamburguer</CategoryTitle>
+                </CategoryItem>
+                <CategoryItem>
+                  <CategoryImage><Image src={others} alt="Icone de outros"></Image></CategoryImage>
+                  <CategoryTitle>Outros</CategoryTitle>
+                </CategoryItem>
+              </CategoriesList>
+            </CategoriesContainer>
+          )
+        }
         <MenuContainer>
           <MenuTitle>Cardápio</MenuTitle>
           <H3>Preferidos</H3>
-          <MenuList>
-            {items.map((item: Produto) => {
-              const cartItem = cart.find((cartItem) => cartItem.id === item.id);
+          <MenuList >
+            {filteredItems.length === 0 ? (
+              <div
+                style={{
+                  padding: '1rem',
+                }}
+              >Nenhum resultado encontrado para {`"Preferidos"`}. Que tal explorar outras opções deliciosas?</div>
+            ) : (
+              filteredItems.map((item: Produto) => {
+                const cartItem = cart.find((cartItem) => cartItem.id === item.id);
 
-              return (
-                <MenuItem key={item.id}>
-                  <MenuItemImage><Image src={itemSeila} alt={`Image item ${item.nome}`}></Image></MenuItemImage>
-                  <MenuItemDetails>
-                    <MenuItemTitle>{item.nome}</MenuItemTitle>
-                    <MenuItemDescription>Delicioso hamburguer engana vegano, vai com duas carnes</MenuItemDescription>
-                    <MenuItemQuantityContainer>
-                      <MenuItemQuantity> <SpanAdd onClick={() => removeItemFromCart(item.id)}> <IoIosRemove />   </SpanAdd>{cartItem ? cartItem.quantidade.toString().padStart(2, '0') : '00'}<SpanAdd onClick={() => addItemToCart(item)}> <IoIosAdd /> </SpanAdd></MenuItemQuantity>
-                      <MenuItemPrice>
-                        R$ {Number(item.preco).toFixed(2).replace('.', ',')} Un.
-                      </MenuItemPrice>
-                    </MenuItemQuantityContainer>
-                  </MenuItemDetails>
-                </MenuItem>
-              )
-            })}
+                return (
+                  <MenuItem key={item.id}>
+                    <MenuItemImage><Image src={itemSeila} alt={`Image item ${item.nome}`}></Image></MenuItemImage>
+                    <MenuItemDetails>
+                      <MenuItemTitle>{item.nome}</MenuItemTitle>
+                      <MenuItemDescription>Hambúrguer com duas camadas suculentas de carne.</MenuItemDescription>
+                      <MenuItemQuantityContainer>
+                        <MenuItemQuantity> <SpanAdd onClick={() => removeItemFromCart(item.id)}> <IoIosRemove />   </SpanAdd>{cartItem ? cartItem.quantidade.toString().padStart(2, '0') : '00'}<SpanAdd onClick={() => addItemToCart(item)}> <IoIosAdd /> </SpanAdd></MenuItemQuantity>
+                        <MenuItemPrice>
+                          R$ {Number(item.preco).toFixed(2).replace('.', ',')} Un.
+                        </MenuItemPrice>
+                      </MenuItemQuantityContainer>
+                    </MenuItemDetails>
+                  </MenuItem>
+                )
+              })
+            )}
             {/* <MenuItem>
               <MenuItemImage><Image src={itemSeila} alt="Image item ${itemhere}"></Image></MenuItemImage>
               <MenuItemDetails>
                 <MenuItemTitle>X-Salada</MenuItemTitle>
-                <MenuItemDescription>Delicioso hamburguer engana vegano, vai com duas carnes</MenuItemDescription>
+                <MenuItemDescription>Hambúrguer com duas camadas suculentas de carne.</MenuItemDescription>
                 <MenuItemQuantityContainer>
                   <MenuItemQuantity>- 1 +</MenuItemQuantity>
                   <MenuItemPrice>R$ 26,00</MenuItemPrice>
@@ -175,27 +197,35 @@ export default function Cardapio() {
               </MenuItemDetails>
             </MenuItem> */}
           </MenuList>
-          <h1>Massas</h1>
+          <H3>Massas</H3>
           <MenuList>
-            {items.map((item: Produto) => {
-              const cartItem = cart.find((cartItem) => cartItem.id === item.id);
+            {filteredItems.length === 0 ? (
+              <div
+                style={{
+                  padding: '1rem',
+                }}
+              >Nenhum resultado encontrado para {`"Massas"`}. Que tal explorar outras opções deliciosas?</div>
+            ) : (
+              filteredItems.map((item: Produto) => {
+                const cartItem = cart.find((cartItem) => cartItem.id === item.id);
 
-              return (
-                <MenuItem key={item.id}>
-                  <MenuItemImage><Image src={itemSeila} alt={`Image item ${item.nome}`}></Image></MenuItemImage>
-                  <MenuItemDetails>
-                    <MenuItemTitle>{item.nome}</MenuItemTitle>
-                    <MenuItemDescription>Delicioso hamburguer engana vegano, vai com duas carnes</MenuItemDescription>
-                    <MenuItemQuantityContainer>
-                      <MenuItemQuantity> <SpanAdd onClick={() => removeItemFromCart(item.id)}> <IoIosRemove />   </SpanAdd>{cartItem ? cartItem.quantidade.toString().padStart(2, '0') : '00'}<SpanAdd onClick={() => addItemToCart(item)}> <IoIosAdd /> </SpanAdd></MenuItemQuantity>
-                      <MenuItemPrice>
-                        R$ {Number(item.preco).toFixed(2).replace('.', ',')} Un.
-                      </MenuItemPrice>
-                    </MenuItemQuantityContainer>
-                  </MenuItemDetails>
-                </MenuItem>
-              )
-            })}
+                return (
+                  <MenuItem key={item.id}>
+                    <MenuItemImage><Image src={itemSeila} alt={`Image item ${item.nome}`}></Image></MenuItemImage>
+                    <MenuItemDetails>
+                      <MenuItemTitle>{item.nome}</MenuItemTitle>
+                      <MenuItemDescription>Hambúrguer com duas camadas suculentas de carne.</MenuItemDescription>
+                      <MenuItemQuantityContainer>
+                        <MenuItemQuantity> <SpanAdd onClick={() => removeItemFromCart(item.id)}> <IoIosRemove />   </SpanAdd>{cartItem ? cartItem.quantidade.toString().padStart(2, '0') : '00'}<SpanAdd onClick={() => addItemToCart(item)}> <IoIosAdd /> </SpanAdd></MenuItemQuantity>
+                        <MenuItemPrice>
+                          R$ {Number(item.preco).toFixed(2).replace('.', ',')} Un.
+                        </MenuItemPrice>
+                      </MenuItemQuantityContainer>
+                    </MenuItemDetails>
+                  </MenuItem>
+                )
+              })
+            )}
           </MenuList>
 
         </MenuContainer>

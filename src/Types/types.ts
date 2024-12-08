@@ -22,6 +22,8 @@ export type TypeItemPedido = {
   produto_id: number;
   quantidade: number;
   observacao?: string;
+  produto_nome?: string;
+  produto_preco?: number;
   created_at: Date;
   updated_at?: Date;
   aproved_by?: number; 
