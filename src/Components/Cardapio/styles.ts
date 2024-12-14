@@ -42,7 +42,7 @@ export const ButtonChamarGarcom = styled.button<loading>`
     left: 100rem;
     margin-right: 2rem;
 
-    padding: .3rem;
+    padding: 1rem;
 
     border-radius: 50%;
     width: 80px;

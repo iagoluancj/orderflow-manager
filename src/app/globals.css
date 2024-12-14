@@ -25,6 +25,7 @@
     /* Status do pedido */
   --emFila: #f1a94e;
   --emAndamento: #0072ff;
+  --pronto: #6dffb3;
   --concluido: linear-gradient(135deg, #00c6ff, #6dffb3);
 }
 

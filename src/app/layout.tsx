@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import ToastProvider from "@/lib/ToastProvider";
 import SupaProvider from "@/Context";
+import StyledComponentsRegistry from "@/Components/StyledRegistry";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -31,13 +32,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Theme accentColor="crimson" grayColor="sand" radius="large" scaling="95%">
-          <ToastProvider>
-            <SupaProvider>
-              {children}
-            </SupaProvider>
-          </ToastProvider>
-        </Theme>
+        <StyledComponentsRegistry>
+          <Theme accentColor="crimson" grayColor="sand" radius="large" scaling="95%">
+            <ToastProvider>
+              <SupaProvider>
+                {children}
+              </SupaProvider>
+            </ToastProvider>
+          </Theme>
+        </StyledComponentsRegistry>
       </body>
     </html>
   );

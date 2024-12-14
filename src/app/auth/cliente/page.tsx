@@ -6,7 +6,7 @@ import Cookies from 'js-cookie';
 import { toast } from "react-toastify";
 import NavbarComponent from "@/Components/Navbar";
 import Cardapio from "@/Components/Cardapio/page";
-import { ChoosingPadding, ChoosingTable, ConfirmButton, ContainerChoosingTable, Description, FailedChoosingTable, Title, Warning } from "./styles";
+import { ChoosingPadding, ChoosingTable, ConfirmButton, ContainerChoosingTable, Description, FailedChoosingTable, Title } from "./styles";
 
 export default function Cliente() {
   const { contextPedidos } = useContext(SupaContext);
@@ -119,11 +119,11 @@ export default function Cliente() {
               <ChoosingTable>
                 <Title>É um prazer ter você conosco.</Title>
                 <Description>
-                  Agora, nos diga, você está em qual mesa?
+                  {/* Agora, nos diga, você está em qual mesa? */}
                   <br />
                   O número da mesa fica em X lugar.
+                  <input type="number" maxLength={10} value={novaMesa} onChange={(e) => setNovaMesa(e.target.value)} placeholder="Informe o número da mesa aqui."/>
                 </Description>
-                <input type="number" maxLength={10} value={novaMesa} onChange={(e) => setNovaMesa(e.target.value)} placeholder="Informe o número da mesa aqui."/>
                 {/* <InputComponent
                   label="Número da mesa"
                   maxLength={10} 
@@ -135,9 +135,9 @@ export default function Cliente() {
                 <ConfirmButton onClick={handleSetMesa}>
                   Confirmar mesa
                 </ConfirmButton>
-                <Warning>
+                {/* <Warning>
                   <i>Atenção ao selecionar sua mesa, caso esteja incorreta teremos problemas na entrega de pedido.</i>
-                </Warning>
+                </Warning> */}
                 <FailedChoosingTable>
                   <Description>
                     <button onClick={callWaiter} disabled={loading}>Problemas ao selecionar a mesa? Chame o garçom clicando aqui.</button>

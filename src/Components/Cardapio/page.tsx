@@ -1,7 +1,7 @@
 "use client"
 import NavbarComponent from "@/Components/Navbar";
 import { ButtonChamarGarcom, CatalogContainer, Categories, CategoriesContainer, CategoriesHeader, CategoriesList, CategoriesTitle, CategoryImage, CategoryItem, CategoryTitle, H3, Header, HeaderContent, HeaderTexts, HeaderTitle, MenuContainer, MenuItem, MenuItemDescription, MenuItemDetails, MenuItemImage, MenuItemPrice, MenuItemQuantity, MenuItemQuantityContainer, MenuItemTitle, MenuList, MenuTitle, SearchBar, SpanAdd, StyledInput } from "./styles";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Produto, TypeProduto } from "@/Types/types";
 import { toast } from "react-toastify";
 import Cookies from 'js-cookie';
@@ -26,7 +26,12 @@ export default function Cardapio() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [items, setItems] = useState<TypeProduto>([]);
+  const massasRef = useRef<HTMLHeadingElement>(null);
   const mesaId = Cookies.get("mesa");
+
+  const scrollToMassas = () => {
+    massasRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
 
   const callWaiter = async () => {
@@ -89,8 +94,8 @@ export default function Cardapio() {
           <HeaderTexts>
             <Image src={logoWaiter} alt="Logo Waiter"></Image>
             <div>
-              <h2>Olá, </h2>
-              <HeaderTitle>Oque escolheremos hoje?</HeaderTitle>
+              <h2>Bem-vindo! </h2>
+              <HeaderTitle>O que deseja saborear hoje?</HeaderTitle>
             </div>
           </HeaderTexts>
           <SearchBar>
@@ -99,7 +104,7 @@ export default function Cardapio() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Nos diga o que você gostaria de saborear hoje!" />
+              placeholder="Pesquise oque você deseja" />
           </SearchBar>
           {/* <HeaderDescription>
             Escolha, personalize e finalize seus pedidos sem complicações.
@@ -119,7 +124,7 @@ export default function Cardapio() {
                 {/* <ViewMore>Ver mais <span>+</span></ViewMore> */}
               </CategoriesHeader>
               <CategoriesList>
-                <CategoryItem>
+                <CategoryItem onClick={scrollToMassas}>
                   <CategoryImage><Image src={massas} alt="Icone de massas"></Image></CategoryImage>
                   <CategoryTitle>Massas</CategoryTitle>
                 </CategoryItem>
@@ -197,7 +202,7 @@ export default function Cardapio() {
               </MenuItemDetails>
             </MenuItem> */}
           </MenuList>
-          <H3>Massas</H3>
+          <H3 ref={massasRef}>Massas</H3>
           <MenuList>
             {filteredItems.length === 0 ? (
               <div

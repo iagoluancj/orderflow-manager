@@ -236,9 +236,9 @@ export const CartOpen = styled.div`
   flex-direction: column;
   background-color: #472829 !important;
 
-  border-top: solid 1px #f1a94e;
+  /* border-top: solid 1px #f1a94e;
   border-left: solid 1px #f1a94e;
-  border-right: solid 1px #f1a94e;
+  border-right: solid 1px #f1a94e; */
 
   gap: 1.5rem;
 `;
@@ -249,14 +249,33 @@ export const OrdersContainer = styled.div`
   border-radius: 14px;
   justify-content: center;
   align-items: center;
+  width: 100%;
 
   border-top: solid 1px #e5484d;
   border-left: solid 1px #e5484d;
   border-right: solid 1px #e5484d;
   margin-bottom: .5rem;
-  padding: 1rem;
+  padding: .5rem;
 
   gap: 1.5rem;
+`;
+
+export const OrdersContainerFila = styled(OrdersContainer)`
+  border-top: solid 1px var(--emFila);
+  border-left: solid 1px var(--emFila);
+  border-right: solid 1px var(--emFila);
+`;
+
+export const OrdersContainerAndamento = styled(OrdersContainer)`
+  border-top: solid 1px var(--emAndamento);
+  border-left: solid 1px var(--emAndamento);
+  border-right: solid 1px var(--emAndamento);
+`;
+
+export const OrdersContainerProntos = styled(OrdersContainer)`
+  border-top: solid 1px var(--pronto);
+  border-left: solid 1px var(--pronto);
+  border-right: solid 1px var(--pronto);
 `;
 
 export const Orders = styled.div`
@@ -265,15 +284,64 @@ export const Orders = styled.div`
 
 export const Order = styled.div`
   width: 100%;
+  padding: 0rem .5rem;
+  padding-top: .2rem;
+  padding-bottom: 1rem;
   margin-bottom: 1rem;
-  border: 1px solid red;
+
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+
+  /* border-top: solid 1px #e5484d;
+  border-left: solid 1px #e5484d;
+  border-right: solid 1px #e5484d; */
+
+  border-radius: 15px;
+  position: relative;
+`;
+
+export const OrderFila = styled(Order)`
+  /* border-top: solid 1px #f1a94e;
+  border-left: solid 1px #f1a94e;
+  border-right: solid 1px #f1a94e; */
 `;
 
 export const TitleOrder = styled(Title)`
   font-size: 1rem;
+  margin: 0;
 `;
 
 export const LiOrderItens = styled.li`
   font-size: 1rem;
-  padding: 0rem 1rem;
+  margin-left: 1rem;
+`;
+
+
+export const PedidoId = styled.p`
+  position: absolute;
+  top: -.6rem;
+  right: 0;
+  margin: 10px;
+`;
+
+export const ViewOrders = styled.button`
+  width: 100%;
+  padding: 0rem .5rem;
+  border-radius: 12px;
+  margin-top: .5rem;
+
+  font-weight: 600;
+
+  background-color: #f1a94e99;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+`;
+
+export const InputNewMesa = styled.input`
+    color: var(--textoNeutro);
+    outline: none;
+
+    &::placeholder {
+    color: var(--darkRed);
+  }
 `;
