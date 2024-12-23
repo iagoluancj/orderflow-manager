@@ -384,6 +384,7 @@ export const MenuItem = styled.div`
 export const MenuItemImage = styled.div`
   flex: 0 0 auto;
   border-radius: 15px;
+  max-width: 60px;
   img {
     object-fit: cover; 
   height: 100%;     

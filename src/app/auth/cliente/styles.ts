@@ -78,9 +78,8 @@ export const ChoosingTable = styled.div`
 
     &::placeholder {
       color: #333;
-      padding: .5rem;
 
-      font-weight: 700;
+      font-weight: 500;
     }
 
     &:active {
@@ -112,6 +111,20 @@ export const Description = styled.p`
   margin-bottom: 1.3rem;
 
   button {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+
+
+    &:hover {
+      text-decoration: underline;
+      text-decoration-color: var(--realce);
+    }
+  }
+
+  svg {
+    color: red;
+
     &:hover {
       text-decoration: underline;
       text-decoration-color: var(--realce);

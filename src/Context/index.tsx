@@ -73,14 +73,14 @@ const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
                 .eq('id', pedidoId);
 
             if (error) {
-                toast.error('Erro ao aprovar o pedido.');
+                // toast.error('Erro ao aprovar o pedido.');
                 console.error('Erro ao atualizar pedido:', error);
             } else {
-                toast.success('Pedido aprovado com sucesso!');
+                // toast.success('Pedido aprovado com sucesso!');
                 console.log('Pedido atualizado com sucesso:', data);
             }
         } catch (error) {
-            toast.error('Erro ao se conectar ao servidor.');
+            // toast.error('Erro ao se conectar ao servidor.');
             console.error('Erro ao atualizar pedido:', error);
         }
     };

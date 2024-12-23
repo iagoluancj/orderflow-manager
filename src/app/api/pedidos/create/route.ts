@@ -7,10 +7,10 @@ import { CartItem, TypeItemPedido, TypePedido } from '@/Types/types';
 export async function POST(request: Request) {
     try {
         const pedidoData = await request.json();
-        const { cliente_id, mesa, itens } = pedidoData;
+        const { cliente_id, mesa, itens, func_id } = pedidoData;
 
 
-        if (!cliente_id || !mesa || !Array.isArray(itens) || itens.length === 0) {
+        if ((!cliente_id && !func_id) || !mesa || !Array.isArray(itens) || itens.length === 0) {
             return NextResponse.json(
                 { message: `Número da mesa, ID do cliente e itens do pedido são obrigatórios.` },
                 { status: 400 }
@@ -23,7 +23,8 @@ export async function POST(request: Request) {
             .from('pedidos')
             .insert([
                 {
-                    cliente_id,
+                    cliente_id: cliente_id || null, 
+                    func_id: func_id || null, 
                     mesa,
                     status: 'aguard_aprovacao', 
                     created_at: createdDate,
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
         if (pedidoError) {
             console.error('Erro ao criar o pedido:', pedidoError);
             return NextResponse.json(
-                { message: 'Erro ao criar o pedido. Tente novamente.' },
+                { message: pedidoError},
                 { status: 500 }
             );
         }

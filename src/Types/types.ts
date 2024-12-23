@@ -10,10 +10,12 @@ export type TypePedido = {
   id: number;
   cliente_id: string; 
   mesa: number; 
-  status: 'aguard_aprovacao' | 'em_fila' | 'em_andamento' | 'pronto' | 'recusado';
+  status: 'cancelado' | 'aguard_aprovacao' | 'em_fila' | 'em_andamento' | 'pronto' | 'pedido_negado' | 'encerrado';
   created_at: Date;
   updated_at?: Date;
   aproved_by?: number; 
+  itens?: { produto_preco: number; quantidade: number }[];
+
 };
 
 export type TypeItemPedido = {

@@ -7,11 +7,13 @@ import { toast } from "react-toastify";
 import NavbarComponent from "@/Components/Navbar";
 import Cardapio from "@/Components/Cardapio/page";
 import { ChoosingPadding, ChoosingTable, ConfirmButton, ContainerChoosingTable, Description, FailedChoosingTable, Title } from "./styles";
+import { MdOutlineReportProblem } from "react-icons/md";
 
 export default function Cliente() {
   const { contextPedidos } = useContext(SupaContext);
   const [lastPedidoId, setLastPedidoId] = useState<number | null>(null);
-  const [novaMesa, setNovaMesa] = useState(Cookies.get("mesa") || ""); 
+  const [novaMesa, setNovaMesa] = useState(Cookies.get("mesa") || "");
+  const { cart} = useContext(SupaContext);
   const [loading, setLoading] = useState(false);
   const [mesa, setMesa] = useState(false)
   const userId = Cookies.get('user_id');
@@ -24,7 +26,7 @@ export default function Cliente() {
 
     setMesa(true)
     Cookies.set("mesa", novaMesa);
-    localStorage.setItem("mesa", novaMesa); 
+    localStorage.setItem("mesa", novaMesa);
     toast.success(`Você está na mesa ${novaMesa}, aproveite!`);
   };
 
@@ -70,11 +72,11 @@ export default function Cliente() {
 
     const monitorPedidos = () => {
       const pedidosCliente = contextPedidos
-        .filter((pedido) => pedido.cliente_id === userId && pedido.updated_at) 
+        .filter((pedido) => pedido.cliente_id === userId && pedido.updated_at)
         .sort((a, b) => {
           const dateA = new Date(a.updated_at ?? 0).getTime();
           const dateB = new Date(b.updated_at ?? 0).getTime();
-          return dateB - dateA; 
+          return dateB - dateA;
         });
 
       const ultimoPedido = pedidosCliente[0];
@@ -110,7 +112,10 @@ export default function Cliente() {
     <>
       {
         mesa ? (
-          <Cardapio />
+          <>
+            <NavbarComponent message='Cardápio' cartQt={cart.length} />
+            <Cardapio />
+          </>
         ) : (
           <ContainerChoosingTable>
             <NavbarComponent message="Defina sua mesa" />
@@ -122,7 +127,7 @@ export default function Cliente() {
                   {/* Agora, nos diga, você está em qual mesa? */}
                   <br />
                   O número da mesa fica em X lugar.
-                  <input type="number" maxLength={10} value={novaMesa} onChange={(e) => setNovaMesa(e.target.value)} placeholder="Informe o número da mesa aqui."/>
+                  <input type="number" maxLength={10} value={novaMesa} onChange={(e) => setNovaMesa(e.target.value)} placeholder="Informe o número da mesa aqui." />
                 </Description>
                 {/* <InputComponent
                   label="Número da mesa"
@@ -140,7 +145,10 @@ export default function Cliente() {
                 </Warning> */}
                 <FailedChoosingTable>
                   <Description>
-                    <button onClick={callWaiter} disabled={loading}>Problemas ao selecionar a mesa? Chame o garçom clicando aqui.</button>
+                    <button onClick={callWaiter} disabled={loading}>
+                      <MdOutlineReportProblem size={25} />
+                      Problemas ao selecionar a mesa? Chame o garçom.
+                    </button>
                   </Description>
                   {/* <ButtonChamarGarcomMesa onClick={callWaiter} disabled={loading}>
                   {loading ? "Chamando..." : "Chamar Garçom"}

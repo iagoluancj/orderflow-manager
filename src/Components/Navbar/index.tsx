@@ -1,42 +1,81 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { ButtonOpenCancel, ButtonOpenConfirm, CartOpen, CartOpenContainer, ContainerItensQT, DropdownMenu, InputNewMesa, ItensQT, LiOrderItens, MenuButton, NavBar, NavButton, NavButtonMesa, NavButtonOrder, NavLink, NavLinks, NavLogo, NavMenu, Order, OrderFila, Orders, OrdersContainer, OrdersContainerAndamento, OrdersContainerFila, OrdersContainerProntos, PedidoId, TitleOrder, ViewOrders } from './styles';
 import { LuLogOut } from 'react-icons/lu';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import logo from '../../assets/logo.png'
-import Image from 'next/image';
+import Image, { StaticImageData } from 'next/image';
 import { FaOpencart, FaShoppingBasket } from 'react-icons/fa';
 import { IoIosAdd, IoIosRemove, IoMdMenu } from 'react-icons/io';
 import { CartItem, TypeItemPedido, TypePedido } from '@/Types/types';
 import Cookies from "js-cookie";
 import { SupaContext } from '@/Context';
 import { toast } from 'react-toastify';
-import { MdOutlineTableBar } from 'react-icons/md';
+import { MdAttachMoney, MdOutlineTableBar } from 'react-icons/md';
 import { MenuItem, MenuItemDescription, MenuItemDetails, MenuItemImage, MenuItemPrice, MenuItemQuantity, MenuItemQuantityContainer, MenuItemTitle, SpanAdd, Title } from '../Cardapio/styles';
 
-import itemSeila from '../../assets/item.png'
+import itemHamburguer from '../../assets/item.jpg'
+import itemPizza from '../../assets/pizza.jpg'
+import itemSalada from '../../assets/salada.jpg'
 
 
 interface NavbarProps {
     message: string;
     cartQt?: number;
+    isGarcom?: boolean;
 }
 
-const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
+const imageMap: { [key: string]: StaticImageData } = {
+    'Hamburguer': itemHamburguer,
+    'Pizza Margherita': itemPizza,
+    'Salada Caesar': itemSalada,
+};
+
+const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt = 0, isGarcom }) => {
     const router = useRouter();
+    const pathname = usePathname();
+
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isGarcomCardapioPage, setIsGarcomCardapioPage] = useState(false);
+    const [isGarcomPedidosPage, setIsGarcomPedidosPage] = useState(false);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isOrderOpen, setIsOrderOpen] = useState(false);
+    const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
     const [isMesaOpen, setIsMesaOpen] = useState(false);
     const [pedidoItens, setPedidoItens] = useState<{ [key: number]: TypeItemPedido[] }>({});
     const [expandedOrders, setExpandedOrders] = useState<number[]>([]);
+    const [garcomMesa, setGarcomMesa] = useState<number | ''>('');
 
-    const { cart, contextPedidos, updateCartItem, addItemToCart, removeItemFromCart, clearCart } = useContext(SupaContext);
+    const { cart, contextPedidos, updateCartItem, addItemToCart, removeItemFromCart, clearCart, contextFuncionarios } = useContext(SupaContext);
     const [novaMesa, setNovaMesa] = useState(Cookies.get("mesa") || "");
+    const email_func = Cookies.get('email_func');
     const currentMesa = Cookies.get("mesa") || "Não definida";
     const menuRef = useRef<HTMLDivElement | null>(null);
 
+
+    const toggleGarcomCardapioPage = () => {
+        const newPageState = !isGarcomCardapioPage;
+        setInterval(() => {
+            setIsGarcomCardapioPage(newPageState)
+        }, 2000);
+
+        const nextRoute = newPageState ? 'http://localhost:3000/auth/garcom/cardapio' : 'http://localhost:3000/auth/garcom';
+        router.push(nextRoute);
+    }
+
+    const toggleGarcomPedidosPage = () => {
+        const newPageState = !isGarcomPedidosPage;
+        setInterval(() => {
+            setIsGarcomPedidosPage(newPageState)
+        }, 2000);
+
+        const nextRoute = newPageState ? 'http://localhost:3000/auth/garcom/pedidos' : 'http://localhost:3000/auth/garcom';
+        router.push(nextRoute);
+    }
+
+    // const toggleGarcomCardapioPage = () => setIsGarcomCardapioPage(!isGarcomCardapioPage);
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
     const toggleOrder = () => setIsOrderOpen(!isOrderOpen);
+    const toggleCreateOrder = () => setIsCreateOrderOpen(!isCreateOrderOpen);
     const toggleMesa = () => setIsMesaOpen(!isMesaOpen);
     const toggleCart = () => {
         setIsCartOpen(!isCartOpen);
@@ -65,15 +104,22 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
     const handleFinalizarPedido = async () => {
         const mesa = Cookies.get("mesa");
         const user_id = Cookies.get('user_id');
+        const email_func = Cookies.get('email_func');
 
-        if (!user_id) {
-            toast.success('Cliente não autenticado. Faça login novamente.');
+        const funcionario = email_func
+            ? contextFuncionarios.find(funcionario => funcionario.email === email_func)
+            : null;
+        const isFuncionario = !!funcionario;
+
+        if (!user_id && !isFuncionario) {
+            toast.error('Cliente não autenticado. Faça login.');
             return;
         }
 
         const pedidoPayload = {
-            cliente_id: user_id,
-            mesa,
+            cliente_id: isFuncionario ? undefined : user_id,
+            func_id: isFuncionario ? funcionario.id : undefined,
+            mesa: isFuncionario ? garcomMesa : mesa,
             itens: cart.map(item => ({
                 produto_id: item.id,
                 quantidade: item.quantidade,
@@ -93,7 +139,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('Erro ao finalizar pedido:', errorData.message);
-                alert('Erro ao finalizar o pedido. Tente novamente.');
+                toast.error('Erro ao finalizar o pedido. Tente novamente.');
                 return;
             }
 
@@ -105,7 +151,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
             setIsCartOpen(false);
         } catch (error) {
             console.error('Erro ao enviar pedido:', error);
-            alert('Erro ao processar o pedido. Tente novamente.');
+            toast.error('Erro ao processar o pedido. Tente novamente.');
         }
     };
 
@@ -117,6 +163,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
 
     const handleObservacaoChange = (id: number, value: string) => {
         updateCartItem(id, { observacao: value });
+    };
+
+    const handleGarcomMesa = (mesa: number) => {
+        setGarcomMesa(mesa)
     };
 
     // const fechItensPedido = async (pedido_id: number) => {
@@ -157,6 +207,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
     };
 
     useEffect(() => {
+        const isCurrentGarcomCardapio = pathname.includes('garcom/cardapio');
+        setIsGarcomCardapioPage(isCurrentGarcomCardapio);
+
+        const isCurrentGarcomPedidos = pathname.includes('garcom/pedidos');
+        setIsGarcomPedidosPage(isCurrentGarcomPedidos);
+
         const fetchAllItensPedidos = async () => {
             const pedidosComItens: { [key: number]: TypeItemPedido[] } = {};
 
@@ -190,7 +246,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
 
-    }, [isMenuOpen, contextPedidos]);
+    }, [isMenuOpen, contextPedidos, pathname]);
 
     return (
         <>
@@ -202,25 +258,56 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
                     <NavLink>{message}</NavLink>
                 </NavLinks>
                 <NavMenu>
-                    <ContainerItensQT onClick={toggleCart}>
-                        <FaOpencart size={30} />
-                        <ItensQT>{cartQt}</ItensQT>
-                    </ContainerItensQT>
-
+                    {
+                        (cartQt > 0 && (isGarcom === false || cartQt !== undefined)) && (
+                            <ContainerItensQT onClick={toggleCart}>
+                                <FaOpencart size={30} />
+                                <ItensQT>{cartQt}</ItensQT>
+                            </ContainerItensQT>
+                        )
+                    }
                     <MenuButton onClick={toggleMenu}>
                         <IoMdMenu size={25} />
                     </MenuButton>
 
                     {isMenuOpen && (
                         <DropdownMenu ref={menuRef}>
-                            <NavButtonOrder onClick={toggleOrder}>
-                                Seus pedidos
-                                <FaShoppingBasket size={25} />
-                            </NavButtonOrder>
-                            <NavButtonMesa onClick={toggleMesa}>
-                                Alterar mesa
-                                <MdOutlineTableBar size={25} />
-                            </NavButtonMesa>
+                            {
+                                isGarcom === true ? (
+                                    <NavButtonOrder onClick={toggleGarcomCardapioPage}>
+                                        {isGarcomCardapioPage ? 'Pedidos' : 'Fazer pedido'}
+                                        <FaShoppingBasket size={25} />
+                                    </NavButtonOrder>
+
+                                ) : (
+                                    <NavButtonOrder onClick={toggleOrder}>
+                                        Seus pedidos
+                                        <FaShoppingBasket size={25} />
+                                    </NavButtonOrder>
+                                )
+                            }
+                            {
+                                isGarcom === true ? (
+                                    <></>
+
+                                ) : (
+                                    <NavButtonMesa onClick={toggleMesa}>
+                                        Alterar mesa
+                                        <MdOutlineTableBar size={25} />
+                                    </NavButtonMesa>
+                                )
+                            }
+                            {
+                                isGarcom === true ? (
+                                    <NavButtonMesa onClick={toggleGarcomPedidosPage}>
+                                        {isGarcomPedidosPage ? 'Pedidos' : 'Fechar contas'}
+                                        <MdAttachMoney  size={25} />
+                                    </NavButtonMesa>
+                                ) : (
+                                    <>
+                                    </>
+                                )
+                            }
                             <NavButton onClick={handleLogout}>
                                 Sair <LuLogOut size={25} />
                             </NavButton>
@@ -252,13 +339,16 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
                             {cart.length > 0 ? (
                                 cart.map((item: CartItem) => {
                                     const cartItem = cart.find((cartItem) => cartItem.id === item.id);
+                                    const itemImage = imageMap[item.nome] || '';
 
                                     return (
                                         <MenuItem key={item.id}>
-                                            <MenuItemImage><Image src={itemSeila} alt={`Image item ${item.nome}`}></Image></MenuItemImage>
+                                            <MenuItemImage><Image src={itemImage} alt={`Image item ${item.nome}`}></Image></MenuItemImage>
                                             <MenuItemDetails>
                                                 <MenuItemTitle>{item.nome}</MenuItemTitle>
-                                                <MenuItemDescription>Hambúrguer com duas camadas suculentas de carne.</MenuItemDescription>
+                                                <MenuItemDescription>
+                                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                </MenuItemDescription>
                                                 <MenuItemQuantityContainer>
                                                     <MenuItemQuantity    > <SpanAdd onClick={() => removeItemFromCart(item.id)}> <IoIosRemove />   </SpanAdd>{cartItem ? cartItem.quantidade.toString().padStart(2, '0') : '00'} uni. <SpanAdd onClick={() => addItemToCart(item)}> <IoIosAdd /> </SpanAdd></MenuItemQuantity>
                                                     <MenuItemPrice>
@@ -345,6 +435,28 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
                                 Fechar
                             </ButtonOpenCancel>
                         </div>
+                        {
+                            email_func ? (
+                                <input
+                                    placeholder="Insira a mesa do cliente: "
+                                    value={garcomMesa || ''}
+                                    onChange={e => handleGarcomMesa(Number(e.target.value))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px',
+                                        color: '#000',
+                                        marginTop: '8px',
+                                        borderRadius: '4px',
+                                        outline: '1px solid #f1a94e',
+                                        border: '1px solid #ccc',
+                                    }}
+                                />
+                            ) : (
+
+                                <>
+                                </>
+                            )
+                        }
                     </CartOpen>
                 </CartOpenContainer>
             )}
@@ -765,6 +877,56 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt }) => {
                         <ButtonOpenCancel onClick={toggleOrder} style={{ marginTop: '20px', padding: '10px 20px' }}>
                             Fechar
                         </ButtonOpenCancel>
+                    </CartOpen>
+                </CartOpenContainer>
+            )}
+            {isCreateOrderOpen && (
+                <CartOpenContainer>
+                    <CartOpen
+                        style={{
+                            backgroundColor: '#3F3F3F',
+                            padding: '20px',
+                            borderRadius: '8px',
+                            width: '100%',
+                            maxWidth: '500px',
+                        }}
+                    >
+                        <Title><MdOutlineTableBar size={30} /> Sua mesa</Title>
+
+                        <h2>Mesa Atual: {currentMesa || "Não definida"}</h2>
+                        <InputNewMesa
+                            type="number"
+                            placeholder="Digite o número da nova mesa"
+                            className="border rounded p-2 mt-2 w-full"
+                            onChange={(e) => setNovaMesa(e.target.value)}
+                        />
+                        <div
+                            style={{
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-evenly',
+                                gap: '1rem',
+                            }}
+                        >
+                            <ButtonOpenConfirm
+                                onClick={handleAlterMesa}
+                                style={{
+                                    padding: "10px 20px",
+                                    background: '#4CAF50',
+                                }}
+                            >
+                                Alterar mesa
+                            </ButtonOpenConfirm>
+                            <ButtonOpenCancel
+                                onClick={toggleCreateOrder}
+                                style={{
+                                    padding: "10px 20px",
+                                }}
+                            >
+                                Cancelar
+                            </ButtonOpenCancel>
+                        </div>
                     </CartOpen>
                 </CartOpenContainer>
             )}

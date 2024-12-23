@@ -1,5 +1,4 @@
 "use client"
-import NavbarComponent from "@/Components/Navbar";
 import { ButtonChamarGarcom, CatalogContainer, Categories, CategoriesContainer, CategoriesHeader, CategoriesList, CategoriesTitle, CategoryImage, CategoryItem, CategoryTitle, H3, Header, HeaderContent, HeaderTexts, HeaderTitle, MenuContainer, MenuItem, MenuItemDescription, MenuItemDetails, MenuItemImage, MenuItemPrice, MenuItemQuantity, MenuItemQuantityContainer, MenuItemTitle, MenuList, MenuTitle, SearchBar, SpanAdd, StyledInput } from "./styles";
 import { useContext, useEffect, useRef, useState } from "react";
 import { Produto, TypeProduto } from "@/Types/types";
@@ -8,7 +7,7 @@ import Cookies from 'js-cookie';
 import { FaConciergeBell } from "react-icons/fa";
 import { CiSearch } from "react-icons/ci";
 import logoWaiter from '../../assets/logoWaiter.png'
-import Image from "next/image";
+import Image, { StaticImageData } from "next/image";
 
 import carnes from '../../assets/Carnes.png'
 import massas from '../../assets/massas.png'
@@ -16,9 +15,18 @@ import pizzas from '../../assets/Pizza.png'
 import hamburguer from '../../assets/hamburguer.png'
 import others from '../../assets/others.png'
 
-import itemSeila from '../../assets/item.png'
+import itemHamburguer from '../../assets/item.jpg'
+import itemPizza from '../../assets/pizza.jpg'
+import itemSalada from '../../assets/salada.jpg'
+
 import { SupaContext } from "@/Context";
 import { IoIosAdd, IoIosRemove } from "react-icons/io";
+
+const imageMap: { [key: string]: StaticImageData } = {
+  'Hamburguer': itemHamburguer,
+  'Pizza Margherita': itemPizza,
+  'Salada Caesar': itemSalada,
+};
 
 
 export default function Cardapio() {
@@ -26,8 +34,17 @@ export default function Cardapio() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [items, setItems] = useState<TypeProduto>([]);
+  const [selectedImage, setSelectedImage] = useState<StaticImageData | null>(null);
   const massasRef = useRef<HTMLHeadingElement>(null);
   const mesaId = Cookies.get("mesa");
+
+  const handleImageClick = (image: StaticImageData) => {
+    setSelectedImage(image);
+  };
+
+  const closeModal = () => {
+    setSelectedImage(null);
+  };
 
   const scrollToMassas = () => {
     massasRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -88,7 +105,6 @@ export default function Cardapio() {
 
   return (
     <CatalogContainer>
-      <NavbarComponent message='Carápio' cartQt={cart.length} />
       <Header>
         <HeaderContent>
           <HeaderTexts>
@@ -161,13 +177,15 @@ export default function Cardapio() {
             ) : (
               filteredItems.map((item: Produto) => {
                 const cartItem = cart.find((cartItem) => cartItem.id === item.id);
+                const itemImage = imageMap[item.nome] || '';
 
                 return (
                   <MenuItem key={item.id}>
-                    <MenuItemImage><Image src={itemSeila} alt={`Image item ${item.nome}`}></Image></MenuItemImage>
+                    <MenuItemImage><Image src={itemImage} alt={`Image item ${item.nome}`} onClick={() => handleImageClick(itemImage)}></Image></MenuItemImage>
                     <MenuItemDetails>
                       <MenuItemTitle>{item.nome}</MenuItemTitle>
-                      <MenuItemDescription>Hambúrguer com duas camadas suculentas de carne.</MenuItemDescription>
+                      <MenuItemDescription>
+                      Lorem ipsum dolor sit amet, consectetur adipiscing elit.</MenuItemDescription>
                       <MenuItemQuantityContainer>
                         <MenuItemQuantity> <SpanAdd onClick={() => removeItemFromCart(item.id)}> <IoIosRemove />   </SpanAdd>{cartItem ? cartItem.quantidade.toString().padStart(2, '0') : '00'}<SpanAdd onClick={() => addItemToCart(item)}> <IoIosAdd /> </SpanAdd></MenuItemQuantity>
                         <MenuItemPrice>
@@ -183,7 +201,8 @@ export default function Cardapio() {
               <MenuItemImage><Image src={itemSeila} alt="Image item ${itemhere}"></Image></MenuItemImage>
               <MenuItemDetails>
                 <MenuItemTitle>X-Salada</MenuItemTitle>
-                <MenuItemDescription>Hambúrguer com duas camadas suculentas de carne.</MenuItemDescription>
+                <MenuItemDescription>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit.</MenuItemDescription>
                 <MenuItemQuantityContainer>
                   <MenuItemQuantity>- 1 +</MenuItemQuantity>
                   <MenuItemPrice>R$ 26,00</MenuItemPrice>
@@ -213,13 +232,16 @@ export default function Cardapio() {
             ) : (
               filteredItems.map((item: Produto) => {
                 const cartItem = cart.find((cartItem) => cartItem.id === item.id);
+                const itemImage = imageMap[item.nome] || '';
 
                 return (
                   <MenuItem key={item.id}>
-                    <MenuItemImage><Image src={itemSeila} alt={`Image item ${item.nome}`}></Image></MenuItemImage>
+                    <MenuItemImage><Image src={itemImage} alt={`Image item ${item.nome}`}></Image></MenuItemImage>
                     <MenuItemDetails>
                       <MenuItemTitle>{item.nome}</MenuItemTitle>
-                      <MenuItemDescription>Hambúrguer com duas camadas suculentas de carne.</MenuItemDescription>
+                      <MenuItemDescription>
+                      Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                      </MenuItemDescription>
                       <MenuItemQuantityContainer>
                         <MenuItemQuantity> <SpanAdd onClick={() => removeItemFromCart(item.id)}> <IoIosRemove />   </SpanAdd>{cartItem ? cartItem.quantidade.toString().padStart(2, '0') : '00'}<SpanAdd onClick={() => addItemToCart(item)}> <IoIosAdd /> </SpanAdd></MenuItemQuantity>
                         <MenuItemPrice>
@@ -263,6 +285,36 @@ export default function Cardapio() {
         <FaConciergeBell size={24} />
         {loading ? "Aguarde.." : "Garçom"}
       </ButtonChamarGarcom>
+      {selectedImage && (
+        <div className="modal" onClick={closeModal}>
+          <div className="modal-content">
+            <Image src={selectedImage} alt="Imagem ampliada" layout="responsive" />
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .modal-content {
+          width: 100%;
+          max-height: 100%;
+        }
+        .modal-content img {
+          width: 100%;
+          height: auto;
+        }
+      `}</style>
 
     </CatalogContainer>
   );
