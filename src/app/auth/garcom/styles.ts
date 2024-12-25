@@ -1,4 +1,3 @@
-import { OrdersContainer } from "@/Components/Navbar/styles";
 import styled from "styled-components";
 
 export const GarcomPage = styled.main`
@@ -20,5 +19,3 @@ export const GarcomContainer = styled.div`
 export const GarcomWrapper = styled.div`
 `;
 
-export const OrdersContainerGracom = styled(OrdersContainer)`
-`;

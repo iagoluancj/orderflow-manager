@@ -3,10 +3,13 @@
 import { SupaContext } from "@/Context";
 import { useContext, useEffect, useState } from "react";
 import Cookies from 'js-cookie';
-import { ButtonOpenCancel, LiOrderItens, Order, Orders, OrdersContainerProntos, PedidoId, TitleOrder, ViewOrders } from "@/Components/Navbar/styles";
+import { ButtonOpenCancel, ButtonOpenConfirm, CartOpen, CartOpenContainer, LiOrderItens, Order, Orders, OrdersContainer, PedidoId, TitleOrder, ViewOrders } from "@/Components/Navbar/styles";
 import { TypeItemPedido, TypePedido } from "@/Types/types";
 import NavbarComponent from "@/Components/Navbar";
-import { GarcomContainer, GarcomPage, GarcomWrapper, OrdersContainerGracom } from "./styles";
+import { GarcomContainer, GarcomPage, GarcomWrapper } from "./styles";
+import { Title } from "../cliente/styles";
+import { IoMdClose } from "react-icons/io";
+import { FaCheck } from "react-icons/fa";
 
 interface Solicitacao {
   mesaId: string;
@@ -18,7 +21,9 @@ export default function Garcom() {
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [expandedOrders, setExpandedOrders] = useState<number[]>([]);
   const [pedidoItens, setPedidoItens] = useState<{ [key: number]: TypeItemPedido[] }>({});
-
+  const [isMesaOpen, setIsMesaOpen] = useState(false);
+  const [handleAcao, setHandleAcao] = useState('');
+  const [currentPedidoId, setCurrentPedidoId] = useState(0);
 
   const toggleOrderItems = (pedidoId: number) => {
     console.log(pedidoItens)
@@ -29,6 +34,11 @@ export default function Garcom() {
     }
   };
 
+  const toggleMesa = (acao: string, pedidoId: number) => {
+    setHandleAcao(acao)
+    setCurrentPedidoId(pedidoId)
+    setIsMesaOpen(!isMesaOpen);
+  }
 
   const handleAlterarStatusPedido = (pedidoId: number, status: string) => {
     const email = Cookies.get('email_func');
@@ -39,6 +49,7 @@ export default function Garcom() {
       return;
     }
 
+    setIsMesaOpen(!isMesaOpen)
     updatePedido(pedidoId, funcionario.id, status);
   };
 
@@ -81,28 +92,39 @@ export default function Garcom() {
 
   useEffect(() => {
     const fetchAllItensPedidos = async () => {
-      const pedidosComItens: { [key: number]: TypeItemPedido[] } = {};
-
+      const cachedData = JSON.parse(localStorage.getItem('pedidosComItens') || '{}');
       const pedidosAguardando = contextPedidos.filter(
-        (pedido) => pedido.status === 'aguard_aprovacao' || pedido.status === 'pronto'
+        (pedido) =>
+          (pedido.status === 'aguard_aprovacao' || pedido.status === 'pronto') &&
+          !cachedData[pedido.id]
       );
 
-      await Promise.all(
-        pedidosAguardando
-          .map(async (pedido: TypePedido) => {
-            // Verifica diretamente pelo client_id presente em cada pedido
+      if (pedidosAguardando.length > 0) {
+        const novosItens: { [key: number]: TypeItemPedido[] } = {};
+
+        await Promise.all(
+          pedidosAguardando.map(async (pedido: TypePedido) => {
             const response = await fetch(`/api/itens-pedidos?pedido_id=${pedido.id}`, { method: 'GET' });
             if (response.ok) {
               const data = await response.json();
-              pedidosComItens[pedido.id] = data.itens;
+              novosItens[pedido.id] = data.itens;
             }
           })
-      );
+        );
 
-      setPedidoItens(pedidosComItens);
+        // Atualizar o cache do navegador
+        const updatedCache = { ...cachedData, ...novosItens };
+        localStorage.setItem('pedidosComItens', JSON.stringify(updatedCache));
+
+        // Atualizar estado
+        setPedidoItens(updatedCache);
+      } else {
+        setPedidoItens(cachedData);
+      }
     };
 
     fetchAllItensPedidos();
+
 
     const interval = setInterval(fetchSolicitacoes, 1000);
 
@@ -139,7 +161,7 @@ export default function Garcom() {
         <GarcomContainer>
           {contextPedidos.length > 0 ? (
             <GarcomWrapper>
-              <OrdersContainerGracom>
+              <OrdersContainer $borderStatus="em_aguardo">
                 <TitleOrder>Pedidos aguardando aprovação</TitleOrder>
                 <Orders>
                   {
@@ -231,7 +253,8 @@ export default function Garcom() {
                               Aprovar Pedido
                             </button>
                             <ButtonOpenCancel
-                              onClick={() => handleAlterarStatusPedido(pedido.id, 'pedido_negado')}
+                              // onClick={() => handleAlterarStatusPedido(pedido.id, 'pedido_negado')}
+                              onClick={() => toggleMesa('reprovar', pedido.id)}
                               style={{ padding: '8px' }}>
                               Reprovar pedido
                             </ButtonOpenCancel>
@@ -240,8 +263,16 @@ export default function Garcom() {
                     )
                   }
                 </Orders>
-              </OrdersContainerGracom>
-              <OrdersContainerProntos>
+              </OrdersContainer>
+
+              {/* <PedidosEItens
+                status="pronto"
+                contextPedidos={contextPedidos}
+                pedidoItens={pedidoItens}
+                isGarcom={true}
+              /> */}
+
+              <OrdersContainer $borderStatus="pronto">
                 <TitleOrder>Pedidos prontos</TitleOrder>
                 <Orders>
                   {
@@ -302,11 +333,6 @@ export default function Garcom() {
                                           ? `Valor un.: R$${item.produto_preco.toFixed(2)}`
                                           : 'Valor un.: R$ER.ROR'}
                                       </p>
-                                      {/* <p>
-                                                                        {item.produto_preco !== undefined
-                                                                            ? `Subtotal: R$${(item.quantidade * item.produto_preco).toFixed(2)}`
-                                                                            : 'Subtotal: R$ER.ROR'}
-                                                                    </p> */}
                                       <p>{`Observação: ${item.observacao || 'Nenhuma'}`}</p>
 
                                     </LiOrderItens>
@@ -333,7 +359,7 @@ export default function Garcom() {
                               Finalizar Pedido
                             </button>
                             <ButtonOpenCancel
-                              onClick={() => handleAlterarStatusPedido(pedido.id, 'cancelado')}
+                              onClick={() => toggleMesa('cancelar', pedido.id)}
                               style={{ padding: '8px' }}>
                               Cancelar pedido
                             </ButtonOpenCancel>
@@ -342,7 +368,7 @@ export default function Garcom() {
                     )
                   }
                 </Orders>
-              </OrdersContainerProntos>
+              </OrdersContainer>
             </GarcomWrapper>
           ) : (
             <>
@@ -351,6 +377,64 @@ export default function Garcom() {
           )}
         </GarcomContainer>
       </GarcomPage>
+
+      {/*Modal*/}
+      {isMesaOpen && (
+        <CartOpenContainer>
+          <CartOpen
+            style={{
+              backgroundColor: '#3F3F3F',
+              padding: '20px',
+              borderRadius: '8px',
+              width: '100%',
+              maxWidth: '500px',
+            }}
+          >
+            <Title
+              style={{
+                textAlign: 'center',
+              }}
+            >{`Realmente deseja ${handleAcao} o pedido ${currentPedidoId}?`}</Title>
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-evenly',
+                gap: '1rem',
+              }}
+            >
+              <ButtonOpenConfirm
+                onClick={() => {
+                  const novoStatus = handleAcao === 'reprovar' ? 'pedido_negado' :
+                    handleAcao === 'cancelar' ? 'cancelado' : null;
+                  if (novoStatus) {
+                    handleAlterarStatusPedido(currentPedidoId, novoStatus);
+                  }
+                }}
+
+                style={{
+                  padding: "10px 20px",
+                  background: '#4CAF50',
+                }}
+              >
+                <FaCheck />
+
+                Confirmar
+              </ButtonOpenConfirm>
+              <ButtonOpenCancel
+                onClick={() => toggleMesa('', 0)}
+                style={{
+                  padding: "10px 20px",
+                }}
+              >
+                <IoMdClose />
+                Fechar
+              </ButtonOpenCancel>
+            </div>
+          </CartOpen>
+        </CartOpenContainer>
+      )}
     </>
   );
 }

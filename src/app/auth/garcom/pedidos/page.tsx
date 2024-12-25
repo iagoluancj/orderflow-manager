@@ -1,14 +1,16 @@
 "use client"
 
 import NavbarComponent from '@/Components/Navbar';
+import { LiOrderItens, ViewOrders } from '@/Components/Navbar/styles';
 import { SupaContext } from '@/Context';
-import { TypePedido } from '@/Types/types';
-import React, { useContext, useState } from 'react';;
+import { TypeItemPedido, TypePedido } from '@/Types/types';
+import React, { useContext, useEffect, useState } from 'react';;
 
 const PedidosGerais = () => {
     const { contextPedidos } = useContext(SupaContext);
+    const [pedidoItens, setPedidoItens] = useState<{ [key: number]: TypeItemPedido[] }>({});
     const [ordenarPor, setOrdenarPor] = useState<'cliente' | 'mesa'>('cliente');
-
+    const [expandedOrders, setExpandedOrders] = useState<number[]>([]);
 
     // Filtrar pedidos não finalizados
     const pedidosNaoFinalizados = contextPedidos.filter(
@@ -17,7 +19,15 @@ const PedidosGerais = () => {
             pedido.status !== 'cancelado' &&
             pedido.status !== 'encerrado');
 
-    // Agrupar pedidos por cliente
+    const toggleOrderItems = (pedidoId: number) => {
+        console.log(pedidoItens)
+        if (expandedOrders.includes(pedidoId)) {
+            setExpandedOrders(expandedOrders.filter(id => id !== pedidoId));
+        } else {
+            setExpandedOrders([...expandedOrders, pedidoId]);
+        }
+    };
+
     const agrupados =
         ordenarPor === 'cliente'
             ? pedidosNaoFinalizados.reduce<Record<string, TypePedido[]>>((acc, pedido) => {
@@ -35,6 +45,31 @@ const PedidosGerais = () => {
                 acc[key].push(pedido);
                 return acc;
             }, {});
+
+    useEffect(() => {
+        const fetchAllItensPedidos = async () => {
+            const pedidosComItens: { [key: number]: TypeItemPedido[] } = {};
+
+            await Promise.all(
+                contextPedidos
+                    .filter(pedido =>
+                        pedido.status !== 'pedido_negado' &&
+                        pedido.status !== 'cancelado' &&
+                        pedido.status !== 'encerrado')
+                    .map(async (pedido: TypePedido) => {
+                        const response = await fetch(`/api/itens-pedidos?pedido_id=${pedido.id}`, { method: 'GET' });
+                        if (response.ok) {
+                            const data = await response.json();
+                            pedidosComItens[pedido.id] = data.itens;
+                        }
+                    })
+            );
+            setPedidoItens(pedidosComItens);
+        };
+
+        fetchAllItensPedidos();
+
+    }, [contextPedidos]);
 
     return (
         <>
@@ -82,22 +117,73 @@ const PedidosGerais = () => {
                                         <p>
                                             <strong>Status:</strong> {pedido.status}
                                         </p>
-                                        <p>
-                                            <strong>Total:</strong> R$
-                                            {(pedido.itens ?? []).reduce(
-                                                (acc, item) =>
-                                                    acc + item.produto_preco * item.quantidade,
-                                                0
-                                            ).toFixed(2)}
-                                        </p>
-                                        <button
-                                            onClick={() => {
-                                                // Implemente ações como expandir itens do pedido
+                                        <p
+                                            style={{
+                                                paddingLeft: '.5rem',
                                             }}
                                         >
-                                            Ver Itens
-                                        </button>
+                                            <span><strong>Total pedido: </strong></span>
+                                            {`R$${pedidoItens[pedido.id]?.reduce(
+                                                (acc, item) =>
+                                                    acc + (item.produto_preco !== undefined ? item.quantidade * item.produto_preco : 0),
+                                                0
+                                            ).toFixed(2)}`}
+                                        </p>
+                                        <ViewOrders onClick={() => toggleOrderItems(pedido.id)}>
+                                            {expandedOrders.includes(pedido.id) ? 'Esconder Itens' : 'Mostrar Itens'}
+                                        </ViewOrders>
+                                        {expandedOrders.includes(pedido.id) && (
+                                            <ul
+                                                style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    width: '100%',
+                                                    gap: '1rem',
+                                                    borderRadius: '12px',
+                                                    boxShadow: '0px 6px 6px -2px rgba(0, 0, 0, 0.2)',
+                                                    paddingBottom: '.5rem',
+                                                }}
+                                            >
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'start',
+                                                        justifyContent: 'start',
+                                                        width: '100%',
+                                                        gap: '1rem',
+                                                    }}
+                                                >
+                                                    {pedidoItens[pedido.id]?.map(item => (
+                                                        <LiOrderItens key={item.id}>
+                                                            <p><strong>{item.quantidade}x</strong>{` ${item.produto_nome}`}</p>
+                                                            <p>{``}</p>
+                                                            <p>
+                                                                {item.produto_preco !== undefined
+                                                                    ? `Valor un.: R$${item.produto_preco.toFixed(2)}`
+                                                                    : 'Valor un.: R$ER.ROR'}
+                                                            </p>
+                                                            <p>{`Observação: ${item.observacao || 'Nenhuma'}`}</p>
+
+                                                        </LiOrderItens>
+                                                    ))}
+                                                </div>
+                                                <p
+                                                    style={{
+                                                        paddingLeft: '.5rem',
+                                                    }}
+                                                >
+                                                    <span><strong>Total pedido: </strong></span>
+                                                    {`R$${pedidoItens[pedido.id]?.reduce(
+                                                        (acc, item) =>
+                                                            acc + (item.produto_preco !== undefined ? item.quantidade * item.produto_preco : 0),
+                                                        0
+                                                    ).toFixed(2)}`}
+                                                </p>
+                                            </ul>
+                                        )}
                                     </li>
+
                                 ))}
                             </ul>
                         </div>
