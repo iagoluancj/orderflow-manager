@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     try {
         const token = jwt.sign({ email }, process.env.JWT_SECRET!, { expiresIn: '1h' });
 
-        const validationUrl = `${process.env.FRONTEND_URL}/api/validar-token?token=${token}&email=${email}`;
+        const validationUrl = `${process.env.FRONTEND_URL}/api/validar-token?token=${token}`;
 
 
         const transporter = nodemailer.createTransport({

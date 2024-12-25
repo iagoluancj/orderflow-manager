@@ -1,4 +1,5 @@
 "use client"
+
 import * as Form from "@radix-ui/react-form";
 import { BGImage, Button, ErrorMessage, FormContainer, LoginContainer, LoginDiv, LoginHeader } from "./styles";
 import logo from '../../assets/logo.png'
@@ -25,28 +26,23 @@ export default function Login() {
   });
   const router = useRouter()
 
-
+  //Submit básico de login. 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log('clicado')
     setLoading(true)
 
+    //Regra regex para validação do email.
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setLoading(false);
-      console.error("Formato de e-mail inválido.");
       toast.error("Por favor, insira um e-mail válido no formato values@values.values.");
       return;
     }
 
     const sanitizedTelefone = formData.telefone.replace(/\D/g, "");
-    // if (sanitizedTelefone.length === 0) {
-    //   setLoading(false);
-    //   toast.error("Por favor, insira um telefone válido contendo apenas números.");
-    //   return;
-    // }
 
     if (formData.email) {
+      //Verifica se o email inserido é de funcionário e age de acordo.
       const emailExists = contextFuncionarios.some(funcionario => funcionario.email === formData.email);
       console.log(emailExists, formData.email)
 
@@ -69,9 +65,7 @@ export default function Login() {
         }, 5000);
         console.log(result)
         return
-      } else {
-        console.log('segue para o cadastro do cliente')
-      }
+      } 
     }
 
     if (sanitizedTelefone.length < 10 || sanitizedTelefone.length > 11) {
@@ -199,7 +193,7 @@ export default function Login() {
 
     const intervalId = setInterval(() => {
       checkAuthToken();
-    }, 3000); 
+    }, 3000);
 
     return () => clearInterval(intervalId);
   }, [contextFuncionarios, router]);
@@ -247,24 +241,24 @@ export default function Login() {
           </Form.Root>
         </LoginDiv>
       ) : (
-          <LoginDiv>
-            {/* shouldAnimate={animate} */}
-            <LoginHeader >
-              <div>
-                <Image alt='Logo' src={logo} />
-              </div>
-              <h1>Email enviado</h1>
-              <p>Verifique sua caixa de email</p>
-              <div>
-                <ErrorMessage>Email enviado com sucesso.</ErrorMessage>
-                <Button disabled={isDisabled} onClick={backToLogin}>Enviar email novamente</Button>
-              </div>
-            </LoginHeader>
-          </LoginDiv>
+        <LoginDiv>
+          {/* shouldAnimate={animate} */}
+          <LoginHeader >
+            <div>
+              <Image alt='Logo' src={logo} />
+            </div>
+            <h1>Email enviado</h1>
+            <p>Verifique sua caixa de email</p>
+            <div>
+              <ErrorMessage>Email enviado com sucesso.</ErrorMessage>
+              <Button disabled={isDisabled} onClick={backToLogin}>Enviar email novamente</Button>
+            </div>
+          </LoginHeader>
+        </LoginDiv>
       )
       }
       <BGImage>
-        <Image src={backgroundRestaurant} alt="Imagem ilustrativa do restaurant"></Image>
+        <Image src={backgroundRestaurant} alt="Imagem ilustrativa do restaurante"></Image>
       </BGImage>
     </LoginContainer>
   );

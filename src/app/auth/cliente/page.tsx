@@ -13,7 +13,7 @@ export default function Cliente() {
   const { contextPedidos } = useContext(SupaContext);
   const [lastPedidoId, setLastPedidoId] = useState<number | null>(null);
   const [novaMesa, setNovaMesa] = useState(Cookies.get("mesa") || "");
-  const { cart} = useContext(SupaContext);
+  const { cart } = useContext(SupaContext);
   const [loading, setLoading] = useState(false);
   const [mesa, setMesa] = useState(false)
   const userId = Cookies.get('user_id');
@@ -87,8 +87,8 @@ export default function Cliente() {
 
         // Exibe toast com base no status do pedido
         switch (ultimoPedido.status) {
-          case "recusado":
-            toast.info("Seu pedido foi recusado pelo estabelecimento.");
+          case "pedido_negado":
+            toast.info("Seu pedido foi negado pelo estabelecimento.");
             break;
           case "em_fila":
             toast.info("Seu pedido foi adicionado à fila!");
@@ -124,25 +124,13 @@ export default function Cliente() {
               <ChoosingTable>
                 <Title>É um prazer ter você conosco.</Title>
                 <Description>
-                  {/* Agora, nos diga, você está em qual mesa? */}
                   <br />
                   O número da mesa fica em X lugar.
                   <input type="number" maxLength={10} value={novaMesa} onChange={(e) => setNovaMesa(e.target.value)} placeholder="Informe o número da mesa aqui." />
                 </Description>
-                {/* <InputComponent
-                  label="Número da mesa"
-                  maxLength={10} 
-                  type="number"
-                  name="mesa"
-                  value={novaMesa} 
-                  onChange={(e) => setNovaMesa(e.target.value)} 
-                /> */}
                 <ConfirmButton onClick={handleSetMesa}>
                   Confirmar mesa
                 </ConfirmButton>
-                {/* <Warning>
-                  <i>Atenção ao selecionar sua mesa, caso esteja incorreta teremos problemas na entrega de pedido.</i>
-                </Warning> */}
                 <FailedChoosingTable>
                   <Description>
                     <button onClick={callWaiter} disabled={loading}>
@@ -150,9 +138,6 @@ export default function Cliente() {
                       Problemas ao selecionar a mesa? Chame o garçom.
                     </button>
                   </Description>
-                  {/* <ButtonChamarGarcomMesa onClick={callWaiter} disabled={loading}>
-                  {loading ? "Chamando..." : "Chamar Garçom"}
-                </ButtonChamarGarcomMesa> */}
                 </FailedChoosingTable>
               </ChoosingTable>
             </ChoosingPadding>

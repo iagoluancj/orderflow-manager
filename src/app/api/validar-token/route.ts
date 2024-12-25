@@ -4,9 +4,9 @@ import jwt from 'jsonwebtoken';
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
-    const email = searchParams.get('email');
 
-    if (!token || !email) {
+    
+    if (!token) {
         return NextResponse.json(
             { message: 'Token ou email não fornecido.' },
             { status: 400 }
@@ -25,12 +25,14 @@ export async function GET(request: Request) {
                 httpOnly: false,
             });
 
-            response.cookies.set('email_func', email, {
-                path: '/',
-                maxAge: 60 * 60 * 24,
-                secure: process.env.NODE_ENV === 'production',
-                httpOnly: false,
-            });
+            if (typeof decoded !== 'string' && 'email' in decoded) {
+                response.cookies.set('email_func', decoded.email, {
+                    path: '/',
+                    maxAge: 60 * 60 * 24, // 24 horas
+                    secure: process.env.NODE_ENV === 'production',
+                    httpOnly: false,
+                });
+            }
 
             return response;
         } else {

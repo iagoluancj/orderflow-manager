@@ -3,6 +3,10 @@ import styled from "styled-components";
 
 // Simples navbar; 
 
+interface BorderStatus {
+  $borderStatus: 'em_fila' | 'em_andamento' | 'pronto' | string;
+}
+
 export const NavBar = styled.nav`
   display: flex;
   justify-content: space-between;
@@ -131,7 +135,7 @@ export const NavButton = styled.button`
     align-items: center;
     justify-content: space-between;
     margin: 1rem 0rem;
-  width: 100%;
+    width: 100%;
     padding: 0.2rem .5rem;
     background: #ff6b6b;
     border: 1px solid transparent;
@@ -171,15 +175,13 @@ export const NavButtonMesa = styled(NavButton)`
 export const ButtonOpenCancel = styled(NavButton)`
   width: unset;
   margin: 1rem 0rem;
-
+  border: 1px solid transparent;
 
 &:hover {
     background-color: var(--textoPrimario);
     color: white;
     border: 1px solid #ff6b6b;
     color: #ff6b6b;
-
-    transform: scale(1.01);
 
     transition: .2s ease-in;
   }
@@ -194,7 +196,6 @@ export const ButtonOpenConfirm = styled(NavButton)`
     background: transparent !important;
     border: 1px solid #4CAF50 !important;
     color: #4CAF50 !important;
-    transform: scale(1.01);
     transition: .2s ease-in;
   }
 
@@ -235,6 +236,10 @@ export const CartOpen = styled.div`
   justify-content: center;
   flex-direction: column;
   background-color: #472829 !important;
+  padding: 20px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
 
   /* border-top: solid 1px #f1a94e;
   border-left: solid 1px #f1a94e;
@@ -243,7 +248,20 @@ export const CartOpen = styled.div`
   gap: 1.5rem;
 `;
 
-export const OrdersContainer = styled.div`
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'em_fila':
+      return 'var(--emFila)';
+    case 'em_andamento':
+      return 'var(--emAndamento)';
+    case 'pronto':
+      return 'var(--pronto)';
+    default:
+      return '#e5484d'; // Cor padrão
+  }
+};
+
+export const OrdersContainer = styled.div<BorderStatus>`
   display: flex;
   flex-direction: column;
   border-radius: 14px;
@@ -251,9 +269,10 @@ export const OrdersContainer = styled.div`
   align-items: center;
   width: 100%;
 
-  border-top: solid 1px #e5484d;
-  border-left: solid 1px #e5484d;
-  border-right: solid 1px #e5484d;
+  border-top: solid 1px ${({ $borderStatus }) => getStatusColor($borderStatus)};
+  border-left: solid 1px ${({ $borderStatus }) => getStatusColor($borderStatus)};
+  border-right: solid 1px ${({ $borderStatus }) => getStatusColor($borderStatus)};
+  
   margin-bottom: .5rem;
   padding: .5rem;
 

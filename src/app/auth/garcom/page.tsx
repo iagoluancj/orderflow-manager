@@ -3,13 +3,10 @@
 import { SupaContext } from "@/Context";
 import { useContext, useEffect, useState } from "react";
 import Cookies from 'js-cookie';
-import { ButtonOpenCancel, ButtonOpenConfirm, CartOpen, CartOpenContainer, LiOrderItens, Order, Orders, OrdersContainer, PedidoId, TitleOrder, ViewOrders } from "@/Components/Navbar/styles";
 import { TypeItemPedido, TypePedido } from "@/Types/types";
 import NavbarComponent from "@/Components/Navbar";
 import { GarcomContainer, GarcomPage, GarcomWrapper } from "./styles";
-import { Title } from "../cliente/styles";
-import { IoMdClose } from "react-icons/io";
-import { FaCheck } from "react-icons/fa";
+import PedidosEItens from "@/Components/PedidosEItens";
 
 interface Solicitacao {
   mesaId: string;
@@ -17,41 +14,41 @@ interface Solicitacao {
 }
 
 export default function Garcom() {
-  const { contextPedidos, contextFuncionarios, updatePedido } = useContext(SupaContext);
+  const { contextPedidos, contextFuncionarios } = useContext(SupaContext);
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
-  const [expandedOrders, setExpandedOrders] = useState<number[]>([]);
+  // const [expandedOrders, setExpandedOrders] = useState<number[]>([]);
   const [pedidoItens, setPedidoItens] = useState<{ [key: number]: TypeItemPedido[] }>({});
-  const [isMesaOpen, setIsMesaOpen] = useState(false);
-  const [handleAcao, setHandleAcao] = useState('');
-  const [currentPedidoId, setCurrentPedidoId] = useState(0);
+  // const [isMesaOpen, setIsMesaOpen] = useState(false);
+  // const [handleAcao, setHandleAcao] = useState('');
+  // const [currentPedidoId, setCurrentPedidoId] = useState(0);
 
-  const toggleOrderItems = (pedidoId: number) => {
-    console.log(pedidoItens)
-    if (expandedOrders.includes(pedidoId)) {
-      setExpandedOrders(expandedOrders.filter(id => id !== pedidoId));
-    } else {
-      setExpandedOrders([...expandedOrders, pedidoId]);
-    }
-  };
+  // const toggleOrderItems = (pedidoId: number) => {
+  //   console.log(pedidoItens)
+  //   if (expandedOrders.includes(pedidoId)) {
+  //     setExpandedOrders(expandedOrders.filter(id => id !== pedidoId));
+  //   } else {
+  //     setExpandedOrders([...expandedOrders, pedidoId]);
+  //   }
+  // };
 
-  const toggleMesa = (acao: string, pedidoId: number) => {
-    setHandleAcao(acao)
-    setCurrentPedidoId(pedidoId)
-    setIsMesaOpen(!isMesaOpen);
-  }
+  // const toggleMesa = (acao: string, pedidoId: number) => {
+  //   setHandleAcao(acao)
+  //   setCurrentPedidoId(pedidoId)
+  //   setIsMesaOpen(!isMesaOpen);
+  // }
 
-  const handleAlterarStatusPedido = (pedidoId: number, status: string) => {
-    const email = Cookies.get('email_func');
-    const funcionario = contextFuncionarios.find((funcionario) => funcionario.email === email);
+  // const handleAlterarStatusPedido = (pedidoId: number, status: string) => {
+  //   const email = Cookies.get('email_func');
+  //   const funcionario = contextFuncionarios.find((funcionario) => funcionario.email === email);
 
-    if (!funcionario) {
-      console.error("Funcionário não logado.");
-      return;
-    }
+  //   if (!funcionario) {
+  //     console.error("Funcionário não logado.");
+  //     return;
+  //   }
 
-    setIsMesaOpen(!isMesaOpen)
-    updatePedido(pedidoId, funcionario.id, status);
-  };
+  //   // setIsMesaOpen(!isMesaOpen)
+  //   updatePedido(pedidoId, funcionario.id, status);
+  // };
 
   const fetchSolicitacoes = async () => {
     try {
@@ -161,7 +158,13 @@ export default function Garcom() {
         <GarcomContainer>
           {contextPedidos.length > 0 ? (
             <GarcomWrapper>
-              <OrdersContainer $borderStatus="em_aguardo">
+              <PedidosEItens
+                status="aguard_aprovacao"
+                contextPedidos={contextPedidos}
+                pedidoItens={pedidoItens}
+                isGarcom={true}
+              />
+              {/* <OrdersContainer $borderStatus="aguard_aprovacao">
                 <TitleOrder>Pedidos aguardando aprovação</TitleOrder>
                 <Orders>
                   {
@@ -187,7 +190,6 @@ export default function Garcom() {
                           <Order key={pedido.id}>
                             <PedidoId><strong>Pedido:</strong> {`${pedido.id}`}</PedidoId>
                             <p><strong>Sua mesa: </strong>{`${pedido.mesa}`}</p>
-                            {/* <p><strong>Status: </strong>{`${pedido.status ? 'Aprovação garçom.' : 'Problema com o status.'}`}</p> */}
                             <ViewOrders onClick={() => toggleOrderItems(pedido.id)}>
                               {expandedOrders.includes(pedido.id) ? 'Esconder Itens' : 'Mostrar Itens'}
                             </ViewOrders>
@@ -222,11 +224,6 @@ export default function Garcom() {
                                           ? `Valor un.: R$${item.produto_preco.toFixed(2)}`
                                           : 'Valor un.: R$ER.ROR'}
                                       </p>
-                                      {/* <p>
-                                                                        {item.produto_preco !== undefined
-                                                                            ? `Subtotal: R$${(item.quantidade * item.produto_preco).toFixed(2)}`
-                                                                            : 'Subtotal: R$ER.ROR'}
-                                                                    </p> */}
                                       <p>{`Observação: ${item.observacao || 'Nenhuma'}`}</p>
 
                                     </LiOrderItens>
@@ -263,16 +260,15 @@ export default function Garcom() {
                     )
                   }
                 </Orders>
-              </OrdersContainer>
-
-              {/* <PedidosEItens
+              </OrdersContainer> */}
+              
+              <PedidosEItens
                 status="pronto"
                 contextPedidos={contextPedidos}
                 pedidoItens={pedidoItens}
                 isGarcom={true}
-              /> */}
-
-              <OrdersContainer $borderStatus="pronto">
+              />
+              {/* <OrdersContainer $borderStatus="pronto">
                 <TitleOrder>Pedidos prontos</TitleOrder>
                 <Orders>
                   {
@@ -294,11 +290,9 @@ export default function Garcom() {
                       )
                         .map((pedido: TypePedido) => (
 
-                          // Talvez organizar em tabela ou grid seja a melhor opção, analisar.
                           <Order key={pedido.id}>
                             <PedidoId><strong>Pedido:</strong> {`${pedido.id}`}</PedidoId>
                             <p><strong>Sua mesa: </strong>{`${pedido.mesa}`}</p>
-                            {/* <p><strong>Status: </strong>{`${pedido.status ? 'Aprovação garçom.' : 'Problema com o status.'}`}</p> */}
                             <ViewOrders onClick={() => toggleOrderItems(pedido.id)}>
                               {expandedOrders.includes(pedido.id) ? 'Esconder Itens' : 'Mostrar Itens'}
                             </ViewOrders>
@@ -352,12 +346,15 @@ export default function Garcom() {
                                 </p>
                               </ul>
                             )}
-                            <button
-                              className="bg-blue-500 text-black px-4 py-2 rounded mt-2"
+                            <ButtonOpenConfirm
+                              style={{
+                                padding: "10px 20px",
+                                background: '#4CAF50',
+                              }}
                               onClick={() => handleAlterarStatusPedido(pedido.id, 'finalizado')}
                             >
                               Finalizar Pedido
-                            </button>
+                            </ButtonOpenConfirm>
                             <ButtonOpenCancel
                               onClick={() => toggleMesa('cancelar', pedido.id)}
                               style={{ padding: '8px' }}>
@@ -368,7 +365,7 @@ export default function Garcom() {
                     )
                   }
                 </Orders>
-              </OrdersContainer>
+              </OrdersContainer> */}
             </GarcomWrapper>
           ) : (
             <>
@@ -379,7 +376,7 @@ export default function Garcom() {
       </GarcomPage>
 
       {/*Modal*/}
-      {isMesaOpen && (
+      {/* {isMesaOpen && (
         <CartOpenContainer>
           <CartOpen
             style={{
@@ -434,7 +431,7 @@ export default function Garcom() {
             </div>
           </CartOpen>
         </CartOpenContainer>
-      )}
+      )} */}
     </>
   );
 }

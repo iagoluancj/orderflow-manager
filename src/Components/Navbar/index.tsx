@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { ButtonOpenCancel, ButtonOpenConfirm, CartOpen, CartOpenContainer, ContainerItensQT, DropdownMenu, InputNewMesa, ItensQT, LiOrderItens, MenuButton, NavBar, NavButton, NavButtonMesa, NavButtonOrder, NavLink, NavLinks, NavLogo, NavMenu, Order, OrderFila, Orders, OrdersContainer, OrdersContainerAndamento, OrdersContainerFila, OrdersContainerProntos, PedidoId, TitleOrder, ViewOrders } from './styles';
+import { ButtonOpenCancel, ButtonOpenConfirm, CartOpen, CartOpenContainer, ContainerItensQT, DropdownMenu, InputNewMesa, ItensQT, MenuButton, NavBar, NavButton, NavButtonMesa, NavButtonOrder, NavLink, NavLinks, NavLogo, NavMenu } from './styles';
 import { LuLogOut } from 'react-icons/lu';
 import { usePathname, useRouter } from 'next/navigation';
 import logo from '../../assets/logo.png'
@@ -16,6 +16,7 @@ import { MenuItem, MenuItemDescription, MenuItemDetails, MenuItemImage, MenuItem
 import itemHamburguer from '../../assets/item.jpg'
 import itemPizza from '../../assets/pizza.jpg'
 import itemSalada from '../../assets/salada.jpg'
+import PedidosEItens from '../PedidosEItens';
 
 
 interface NavbarProps {
@@ -42,7 +43,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt = 0, isGarcom 
     const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
     const [isMesaOpen, setIsMesaOpen] = useState(false);
     const [pedidoItens, setPedidoItens] = useState<{ [key: number]: TypeItemPedido[] }>({});
-    const [expandedOrders, setExpandedOrders] = useState<number[]>([]);
     const [garcomMesa, setGarcomMesa] = useState<number | ''>('');
 
     const { cart, contextPedidos, updateCartItem, addItemToCart, removeItemFromCart, clearCart, contextFuncionarios } = useContext(SupaContext);
@@ -80,14 +80,15 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt = 0, isGarcom 
     const toggleCart = () => {
         setIsCartOpen(!isCartOpen);
     };
-    const toggleOrderItems = (pedidoId: number) => {
-        console.log(pedidoItens)
-        if (expandedOrders.includes(pedidoId)) {
-            setExpandedOrders(expandedOrders.filter(id => id !== pedidoId));
-        } else {
-            setExpandedOrders([...expandedOrders, pedidoId]);
-        }
-    };
+
+    // const toggleOrderItems = (pedidoId: number) => {
+    //     console.log(pedidoItens)
+    //     if (expandedOrders.includes(pedidoId)) {
+    //         setExpandedOrders(expandedOrders.filter(id => id !== pedidoId));
+    //     } else {
+    //         setExpandedOrders([...expandedOrders, pedidoId]);
+    //     }
+    // };
 
     const handleAlterMesa = () => {
         if (!novaMesa) {
@@ -169,30 +170,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt = 0, isGarcom 
         setGarcomMesa(mesa)
     };
 
-    // const fechItensPedido = async (pedido_id: number) => {
-
-    //     try {
-    //         const response = await fetch(`/api/itens-pedidos?pedido_id=${pedido_id}`, {
-    //             method: 'GET',
-    //         });
-
-    //         if (!response.ok) {
-    //             const errorData = await response.json();
-    //             console.error('Erro ao buscar itens do pedido:', errorData.message);
-    //             toast.error('Erro ao buscar itens do pedido. Tente novamente.');
-    //             return;
-    //         }
-
-    //         const data = await response.json();
-    //         console.log('Itens do pedido buscado com sucesso:', data);
-
-    //         clearCart();
-    //         setIsCartOpen(false);
-    //     } catch (error) {
-    //         console.error('Erro buscar itens do pedido:', error);
-    //     }
-    // };
-
     const handleLogout = () => {
         localStorage.removeItem('userSession');
         localStorage.clear();
@@ -214,25 +191,37 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt = 0, isGarcom 
         setIsGarcomPedidosPage(isCurrentGarcomPedidos);
 
         const fetchAllItensPedidos = async () => {
-            const pedidosComItens: { [key: number]: TypeItemPedido[] } = {};
+            // const pedidosComItens: { [key: number]: TypeItemPedido[] } = {};
+            const cachedData = JSON.parse(localStorage.getItem('pedidosComItens') || '{}');
 
-            await Promise.all(
-                contextPedidos
-                    .filter(pedido =>
-                        // pedido.status === 'aguard_aprovacao' &&
-                        pedido.cliente_id === Cookies.get('user_id')
-                    )
-                    .map(async (pedido: TypePedido) => {
+            const pedidosSemCache = contextPedidos.filter(
+                pedido => pedido.cliente_id === Cookies.get('user_id') && !cachedData[pedido.id]
+            );
+
+            if (pedidosSemCache.length > 0) {
+                const novosItens: { [key: number]: TypeItemPedido[] } = {};
+
+                await Promise.all(
+                    pedidosSemCache.map(async (pedido: TypePedido) => {
                         const response = await fetch(`/api/itens-pedidos?pedido_id=${pedido.id}`, { method: 'GET' });
                         if (response.ok) {
                             const data = await response.json();
-                            pedidosComItens[pedido.id] = data.itens;
+                            novosItens[pedido.id] = data.itens;
                         }
                     })
-            );
+                );
 
-            setPedidoItens(pedidosComItens);
+                // Atualizar o cache do navegador
+                const updatedCache = { ...cachedData, ...novosItens };
+                localStorage.setItem('pedidosComItens', JSON.stringify(updatedCache));
+
+                // Atualizar estado
+                setPedidoItens(updatedCache);
+            } else {
+                setPedidoItens(cachedData);
+            }
         };
+
 
         fetchAllItensPedidos();
 
@@ -301,7 +290,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt = 0, isGarcom 
                                 isGarcom === true ? (
                                     <NavButtonMesa onClick={toggleGarcomPedidosPage}>
                                         {isGarcomPedidosPage ? 'Pedidos' : 'Fechar contas'}
-                                        <MdAttachMoney  size={25} />
+                                        <MdAttachMoney size={25} />
                                     </NavButtonMesa>
                                 ) : (
                                     <>
@@ -315,6 +304,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt = 0, isGarcom 
                     )}
                 </NavMenu>
             </NavBar>
+
+            {/* Não necessário, já possui poucas linhas. */}
             {isCartOpen && (
                 <CartOpenContainer
                 >
@@ -378,34 +369,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt = 0, isGarcom 
                             ) : (
                                 <>
                                     <p>O carrinho está vazio</p>
-
-                                    {/* SKELLETON a ser montado 
-                                    <MenuItem>
-                                        <MenuItemImage><Image src={itemSeila} alt={`Image item skeleton`}></Image></MenuItemImage>
-                                        <MenuItemDetails>
-                                            <MenuItemTitle>N/A</MenuItemTitle>
-                                            <MenuItemDescription>Lorém ipsum skeleton</MenuItemDescription>
-                                            <MenuItemQuantityContainer>
-                                                <MenuItemQuantity    > <SpanAdd> <IoIosRemove />   </SpanAdd>00 uni. <SpanAdd> <IoIosAdd /> </SpanAdd></MenuItemQuantity>
-                                                <MenuItemPrice>
-                                                    R$ 00,00 Total
-                                                </MenuItemPrice>
-                                            </MenuItemQuantityContainer>
-                                            <input
-                                                placeholder="Observações"
-                                                disabled
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '8px',
-                                                    color: '#000',
-                                                    marginTop: '8px',
-                                                    borderRadius: '4px',
-                                                    outline: '1px solid #f1a94e',
-                                                    border: '1px solid #ccc',
-                                                }}
-                                            />
-                                        </MenuItemDetails>
-                                    </MenuItem> */}
                                 </>
 
                             )
@@ -460,426 +423,424 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt = 0, isGarcom 
                     </CartOpen>
                 </CartOpenContainer>
             )}
+
+            {/*Reutilização aplicada. */}
             {isOrderOpen && (
-                <CartOpenContainer
-                >
-                    <CartOpen
-                        style={{
-                            backgroundColor: '#3F3F3F',
-                            padding: '20px',
-                            borderRadius: '8px',
-                            width: '100%',
-                            maxWidth: '500px',
-                        }}
+                <>
+                    <CartOpenContainer
                     >
-                        <Title>
-                            <FaShoppingBasket size={25} />
-                            Seus pedidos
-                        </Title>
-
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                width: '100%',
-                                gap: '1rem',
-                            }}
+                        <CartOpen
                         >
-                            {contextPedidos.filter(pedido => pedido.cliente_id === Cookies.get('user_id')).length > 0 ? (
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        width: '100%',
-                                        gap: '1rem',
-                                    }}
-                                >
-                                    <OrdersContainer>
-                                        <TitleOrder>Pedidos aguardando aprovação</TitleOrder>
-                                        <Orders>
-                                            {
-                                                contextPedidos
-                                                    .filter(
-                                                        pedido =>
-                                                            pedido.status === 'aguard_aprovacao' &&
-                                                            pedido.cliente_id === Cookies.get('user_id')
-                                                    )
-                                                    .length === 0 ? (
-                                                    <p
-                                                        style={{
-                                                            textAlign: 'center',
-                                                        }}
-                                                    ><i>Nenhum pedido neste status.</i></p>
-                                                ) : (
-                                                    contextPedidos.filter(
-                                                        pedido =>
-                                                            pedido.status === 'aguard_aprovacao' &&
-                                                            pedido.cliente_id === Cookies.get('user_id')
-                                                    )
-                                                        .map((pedido: TypePedido) => (
+                            <Title>
+                                <FaShoppingBasket size={25} />
+                                Seus pedidos
+                            </Title>
 
-                                                            // Talvez organizar em tabela ou grid seja a melhor opção, analisar.
-                                                            <Order key={pedido.id}>
-                                                                <PedidoId><strong>Pedido:</strong> {`${pedido.id}`}</PedidoId>
-                                                                <p><strong>Sua mesa: </strong>{`${pedido.mesa}`}</p>
-                                                                {/* <p><strong>Status: </strong>{`${pedido.status ? 'Aprovação garçom.' : 'Problema com o status.'}`}</p> */}
-                                                                <ViewOrders onClick={() => toggleOrderItems(pedido.id)}>
-                                                                    {expandedOrders.includes(pedido.id) ? 'Esconder Itens' : 'Mostrar Itens'}
-                                                                </ViewOrders>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    width: '100%',
+                                    gap: '1rem',
+                                }}
+                            >
+                                {contextPedidos.filter(pedido => pedido.cliente_id === Cookies.get('user_id')).length > 0 ? (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            width: '100%',
+                                            gap: '1rem',
+                                        }}
+                                    >
+                                        
+                                        <PedidosEItens
+                                            status="aguard_aprovacao"
+                                            contextPedidos={contextPedidos}
+                                            pedidoItens={pedidoItens}
+                                        />
+                                        {/* <OrdersContainer>
+                                            <TitleOrder>Pedidos aguardando aprovação</TitleOrder>
+                                            <Orders>
+                                                {
+                                                    contextPedidos
+                                                        .filter(
+                                                            pedido =>
+                                                                pedido.status === 'aguard_aprovacao' &&
+                                                                pedido.cliente_id === Cookies.get('user_id')
+                                                        )
+                                                        .length === 0 ? (
+                                                        <p
+                                                            style={{
+                                                                textAlign: 'center',
+                                                            }}
+                                                        ><i>Nenhum pedido neste status.</i></p>
+                                                    ) : (
+                                                        contextPedidos.filter(
+                                                            pedido =>
+                                                                pedido.status === 'aguard_aprovacao' &&
+                                                                pedido.cliente_id === Cookies.get('user_id')
+                                                        )
+                                                            .map((pedido: TypePedido) => (
 
-                                                                {expandedOrders.includes(pedido.id) && (
-                                                                    <ul
-                                                                        style={{
-                                                                            display: 'flex',
-                                                                            flexDirection: 'column',
-                                                                            width: '100%',
-                                                                            gap: '1rem',
-                                                                            borderRadius: '12px',
-                                                                            boxShadow: '0px 6px 6px -2px rgba(0, 0, 0, 0.2)',
-                                                                            paddingBottom: '.5rem',
-                                                                        }}
-                                                                    >
-                                                                        <div
+                                                                <Order key={pedido.id}>
+                                                                    <PedidoId><strong>Pedido:</strong> {`${pedido.id}`}</PedidoId>
+                                                                    <p><strong>Sua mesa: </strong>{`${pedido.mesa}`}</p>
+                                                                    <ViewOrders onClick={() => toggleOrderItems(pedido.id)}>
+                                                                        {expandedOrders.includes(pedido.id) ? 'Esconder Itens' : 'Mostrar Itens'}
+                                                                    </ViewOrders>
+
+                                                                    {expandedOrders.includes(pedido.id) && (
+                                                                        <ul
                                                                             style={{
                                                                                 display: 'flex',
                                                                                 flexDirection: 'column',
-                                                                                alignItems: 'start',
-                                                                                justifyContent: 'start',
                                                                                 width: '100%',
                                                                                 gap: '1rem',
+                                                                                borderRadius: '12px',
+                                                                                boxShadow: '0px 6px 6px -2px rgba(0, 0, 0, 0.2)',
+                                                                                paddingBottom: '.5rem',
                                                                             }}
                                                                         >
-                                                                            {pedidoItens[pedido.id]?.map(item => (
-                                                                                <LiOrderItens key={item.id}>
-                                                                                    <p><strong>{item.quantidade}x</strong>{` ${item.produto_nome}`}</p>
-                                                                                    <p>{``}</p>
-                                                                                    <p>
-                                                                                        {item.produto_preco !== undefined
-                                                                                            ? `Valor un.: R$${item.produto_preco.toFixed(2)}`
-                                                                                            : 'Valor un.: R$ER.ROR'}
-                                                                                    </p>
-                                                                                    {/* <p>
-                                                                            {item.produto_preco !== undefined
-                                                                                ? `Subtotal: R$${(item.quantidade * item.produto_preco).toFixed(2)}`
-                                                                                : 'Subtotal: R$ER.ROR'}
-                                                                        </p> */}
-                                                                                    <p>{`Observação: ${item.observacao || 'Nenhuma'}`}</p>
+                                                                            <div
+                                                                                style={{
+                                                                                    display: 'flex',
+                                                                                    flexDirection: 'column',
+                                                                                    alignItems: 'start',
+                                                                                    justifyContent: 'start',
+                                                                                    width: '100%',
+                                                                                    gap: '1rem',
+                                                                                }}
+                                                                            >
+                                                                                {pedidoItens[pedido.id]?.map(item => (
+                                                                                    <LiOrderItens key={item.id}>
+                                                                                        <p><strong>{item.quantidade}x</strong>{` ${item.produto_nome}`}</p>
+                                                                                        <p>{``}</p>
+                                                                                        <p>
+                                                                                            {item.produto_preco !== undefined
+                                                                                                ? `Valor un.: R$${item.produto_preco.toFixed(2)}`
+                                                                                                : 'Valor un.: R$ER.ROR'}
+                                                                                        </p>
+                                                                                        <p>{`Observação: ${item.observacao || 'Nenhuma'}`}</p>
 
-                                                                                </LiOrderItens>
-                                                                            ))}
-                                                                        </div>
-                                                                        <p
-                                                                            style={{
-                                                                                paddingLeft: '.5rem',
-                                                                            }}
-                                                                        >
-                                                                            <span><strong>Total pedido: </strong></span>
-                                                                            {`R$${pedidoItens[pedido.id]?.reduce(
-                                                                                (acc, item) =>
-                                                                                    acc + (item.produto_preco !== undefined ? item.quantidade * item.produto_preco : 0),
-                                                                                0
-                                                                            ).toFixed(2)}`}
-                                                                        </p>
-                                                                    </ul>
-                                                                )}
-                                                            </Order>
-                                                        ))
-                                                )
-                                            }
-                                        </Orders>
-                                    </OrdersContainer>
-                                    <OrdersContainerFila>
-                                        <TitleOrder>Pedidos em fila</TitleOrder>
-                                        <Orders>
-                                            {
-                                                contextPedidos
-                                                    .filter(
-                                                        pedido =>
-                                                            pedido.status === 'em_fila' &&
-                                                            pedido.cliente_id === Cookies.get('user_id')
+                                                                                    </LiOrderItens>
+                                                                                ))}
+                                                                            </div>
+                                                                            <p
+                                                                                style={{
+                                                                                    paddingLeft: '.5rem',
+                                                                                }}
+                                                                            >
+                                                                                <span><strong>Total pedido: </strong></span>
+                                                                                {`R$${pedidoItens[pedido.id]?.reduce(
+                                                                                    (acc, item) =>
+                                                                                        acc + (item.produto_preco !== undefined ? item.quantidade * item.produto_preco : 0),
+                                                                                    0
+                                                                                ).toFixed(2)}`}
+                                                                            </p>
+                                                                        </ul>
+                                                                    )}
+                                                                </Order>
+                                                            ))
                                                     )
-                                                    .length === 0 ? (
-                                                    <p
-                                                        style={{
-                                                            textAlign: 'center',
-                                                        }}
-                                                    ><i>Nenhum pedido neste status.</i></p>
-                                                ) : (
-                                                    contextPedidos.filter(
-                                                        pedido =>
-                                                            pedido.status === 'em_fila' &&
-                                                            pedido.cliente_id === Cookies.get('user_id')
-                                                    )
-                                                        .map((pedido: TypePedido) => (
-                                                            <OrderFila key={pedido.id}>
-                                                                <PedidoId><strong>Pedido:</strong> {`${pedido.id}`}</PedidoId>
-                                                                <p><strong>Sua mesa: </strong>{`${pedido.mesa}`}</p>
-                                                                {/* <p><strong>Status: </strong>{`${pedido.status ? 'Pedido em fila.' : 'Problema com o status.'}`}</p> */}
-                                                                <ViewOrders onClick={() => toggleOrderItems(pedido.id)}>
-                                                                    {expandedOrders.includes(pedido.id) ? 'Esconder Itens' : 'Mostrar Itens'}
-                                                                </ViewOrders>
+                                                }
+                                            </Orders>
+                                        </OrdersContainer> */}
+                                        <PedidosEItens
+                                            status="em_fila"
+                                            contextPedidos={contextPedidos}
+                                            pedidoItens={pedidoItens}
+                                        />
+                                        {/* <OrdersContainerFila>
+                                            <TitleOrder>Pedidos em fila</TitleOrder>
+                                            <Orders>
+                                                {
+                                                    contextPedidos
+                                                        .filter(
+                                                            pedido =>
+                                                                pedido.status === 'em_fila' &&
+                                                                pedido.cliente_id === Cookies.get('user_id')
+                                                        )
+                                                        .length === 0 ? (
+                                                        <p
+                                                            style={{
+                                                                textAlign: 'center',
+                                                            }}
+                                                        ><i>Nenhum pedido neste status.</i></p>
+                                                    ) : (
+                                                        contextPedidos.filter(
+                                                            pedido =>
+                                                                pedido.status === 'em_fila' &&
+                                                                pedido.cliente_id === Cookies.get('user_id')
+                                                        )
+                                                            .map((pedido: TypePedido) => (
+                                                                <OrderFila key={pedido.id}>
+                                                                    <PedidoId><strong>Pedido:</strong> {`${pedido.id}`}</PedidoId>
+                                                                    <p><strong>Sua mesa: </strong>{`${pedido.mesa}`}</p>
+                                                                    <ViewOrders onClick={() => toggleOrderItems(pedido.id)}>
+                                                                        {expandedOrders.includes(pedido.id) ? 'Esconder Itens' : 'Mostrar Itens'}
+                                                                    </ViewOrders>
 
-                                                                {expandedOrders.includes(pedido.id) && (
-                                                                    <ul
-                                                                        style={{
-                                                                            display: 'flex',
-                                                                            flexDirection: 'column',
-                                                                            width: '100%',
-                                                                            gap: '1rem',
-                                                                            borderRadius: '12px',
-                                                                            boxShadow: '0px 6px 6px -2px rgba(0, 0, 0, 0.2)',
-                                                                            paddingBottom: '.5rem',
-                                                                        }}
-                                                                    >
-                                                                        <div
+                                                                    {expandedOrders.includes(pedido.id) && (
+                                                                        <ul
                                                                             style={{
                                                                                 display: 'flex',
-                                                                                flexDirection: 'row',
-                                                                                alignItems: 'start',
-                                                                                justifyContent: 'start',
-                                                                                flexWrap: 'wrap',
+                                                                                flexDirection: 'column',
                                                                                 width: '100%',
                                                                                 gap: '1rem',
+                                                                                borderRadius: '12px',
+                                                                                boxShadow: '0px 6px 6px -2px rgba(0, 0, 0, 0.2)',
+                                                                                paddingBottom: '.5rem',
                                                                             }}
                                                                         >
-                                                                            {pedidoItens[pedido.id]?.map(item => (
-                                                                                <LiOrderItens key={item.id}>
-                                                                                    <p><strong>{item.quantidade}x</strong>{` ${item.produto_nome}`}</p>
-                                                                                    <p>{``}</p>
-                                                                                    <p>
-                                                                                        {item.produto_preco !== undefined
-                                                                                            ? `Valor un.: R$${item.produto_preco.toFixed(2)}`
-                                                                                            : 'Valor un.: R$ER.ROR'}
-                                                                                    </p>
-                                                                                    {/* <p>
-                                                                                {item.produto_preco !== undefined
-                                                                                    ? `Subtotal: R$${(item.quantidade * item.produto_preco).toFixed(2)}`
-                                                                                    : 'Subtotal: R$ER.ROR'}
-                                                                            </p> */}
-                                                                                    <p>{`Observação: ${item.observacao || 'Nenhuma'}`}</p>
+                                                                            <div
+                                                                                style={{
+                                                                                    display: 'flex',
+                                                                                    flexDirection: 'row',
+                                                                                    alignItems: 'start',
+                                                                                    justifyContent: 'start',
+                                                                                    flexWrap: 'wrap',
+                                                                                    width: '100%',
+                                                                                    gap: '1rem',
+                                                                                }}
+                                                                            >
+                                                                                {pedidoItens[pedido.id]?.map(item => (
+                                                                                    <LiOrderItens key={item.id}>
+                                                                                        <p><strong>{item.quantidade}x</strong>{` ${item.produto_nome}`}</p>
+                                                                                        <p>{``}</p>
+                                                                                        <p>
+                                                                                            {item.produto_preco !== undefined
+                                                                                                ? `Valor un.: R$${item.produto_preco.toFixed(2)}`
+                                                                                                : 'Valor un.: R$ER.ROR'}
+                                                                                        </p>
 
-                                                                                </LiOrderItens>
-                                                                            ))}
-                                                                        </div>
-                                                                        <p
-                                                                            style={{
-                                                                                paddingLeft: '.5rem',
-                                                                            }}
-                                                                        >
-                                                                            <span><strong>Total pedido: </strong></span>
-                                                                            {`R$${pedidoItens[pedido.id]?.reduce(
-                                                                                (acc, item) =>
-                                                                                    acc + (item.produto_preco !== undefined ? item.quantidade * item.produto_preco : 0),
-                                                                                0
-                                                                            ).toFixed(2)}`}
-                                                                        </p>
-                                                                    </ul>
-                                                                )}
-                                                            </OrderFila>
-                                                        ))
-                                                )
-                                            }
-                                        </Orders>
-                                    </OrdersContainerFila>
-                                    <OrdersContainerAndamento>
-                                        <TitleOrder>Pedidos em andamento</TitleOrder>
-                                        <Orders>
-                                            {
-                                                contextPedidos
-                                                    .filter(
-                                                        pedido =>
-                                                            pedido.status === 'em_andamento' &&
-                                                            pedido.cliente_id === Cookies.get('user_id')
-                                                    )
-                                                    .length === 0 ? (
-                                                    <p
-                                                        style={{
-                                                            textAlign: 'center',
-                                                        }}
-                                                    ><i>Nenhum pedido neste status.</i></p>
-                                                ) : (
-                                                    contextPedidos.filter(
-                                                        pedido =>
-                                                            pedido.status === 'em_andamento' &&
-                                                            pedido.cliente_id === Cookies.get('user_id')
-                                                    )
-                                                        .map((pedido: TypePedido) => (
-                                                            <OrderFila key={pedido.id}>
-                                                                <PedidoId><strong>Pedido:</strong> {`${pedido.id}`}</PedidoId>
-                                                                <p><strong>Sua mesa: </strong>{`${pedido.mesa}`}</p>
-                                                                {/* <p><strong>Status: </strong>{`${pedido.status ? 'Pedido em fila' : 'Problema com o status.'}`}</p> */}
-                                                                <ViewOrders onClick={() => toggleOrderItems(pedido.id)}>
-                                                                    {expandedOrders.includes(pedido.id) ? 'Esconder Itens' : 'Mostrar Itens'}
-                                                                </ViewOrders>
+                                                                                        <p>{`Observação: ${item.observacao || 'Nenhuma'}`}</p>
 
-                                                                {expandedOrders.includes(pedido.id) && (
-                                                                    <ul
-                                                                        style={{
-                                                                            display: 'flex',
-                                                                            flexDirection: 'column',
-                                                                            width: '100%',
-                                                                            gap: '1rem',
-                                                                            borderRadius: '12px',
-                                                                            boxShadow: '0px 6px 6px -2px rgba(0, 0, 0, 0.2)',
-                                                                            paddingBottom: '.5rem',
-                                                                        }}
-                                                                    >
-                                                                        <div
+                                                                                    </LiOrderItens>
+                                                                                ))}
+                                                                            </div>
+                                                                            <p
+                                                                                style={{
+                                                                                    paddingLeft: '.5rem',
+                                                                                }}
+                                                                            >
+                                                                                <span><strong>Total pedido: </strong></span>
+                                                                                {`R$${pedidoItens[pedido.id]?.reduce(
+                                                                                    (acc, item) =>
+                                                                                        acc + (item.produto_preco !== undefined ? item.quantidade * item.produto_preco : 0),
+                                                                                    0
+                                                                                ).toFixed(2)}`}
+                                                                            </p>
+                                                                        </ul>
+                                                                    )}
+                                                                </OrderFila>
+                                                            ))
+                                                    )
+                                                }
+                                            </Orders>
+                                        </OrdersContainerFila> */}
+                                        <PedidosEItens
+                                            status="em_andamento"
+                                            contextPedidos={contextPedidos}
+                                            pedidoItens={pedidoItens}
+                                        />
+                                        {/* <OrdersContainerAndamento>
+                                            <TitleOrder>Pedidos em andamento</TitleOrder>
+                                            <Orders>
+                                                {
+                                                    contextPedidos
+                                                        .filter(
+                                                            pedido =>
+                                                                pedido.status === 'em_andamento' &&
+                                                                pedido.cliente_id === Cookies.get('user_id')
+                                                        )
+                                                        .length === 0 ? (
+                                                        <p
+                                                            style={{
+                                                                textAlign: 'center',
+                                                            }}
+                                                        ><i>Nenhum pedido neste status.</i></p>
+                                                    ) : (
+                                                        contextPedidos.filter(
+                                                            pedido =>
+                                                                pedido.status === 'em_andamento' &&
+                                                                pedido.cliente_id === Cookies.get('user_id')
+                                                        )
+                                                            .map((pedido: TypePedido) => (
+                                                                <OrderFila key={pedido.id}>
+                                                                    <PedidoId><strong>Pedido:</strong> {`${pedido.id}`}</PedidoId>
+                                                                    <p><strong>Sua mesa: </strong>{`${pedido.mesa}`}</p>
+                                                                    <ViewOrders onClick={() => toggleOrderItems(pedido.id)}>
+                                                                        {expandedOrders.includes(pedido.id) ? 'Esconder Itens' : 'Mostrar Itens'}
+                                                                    </ViewOrders>
+
+                                                                    {expandedOrders.includes(pedido.id) && (
+                                                                        <ul
                                                                             style={{
                                                                                 display: 'flex',
-                                                                                flexDirection: 'row',
-                                                                                alignItems: 'start',
-                                                                                justifyContent: 'start',
-                                                                                flexWrap: 'wrap',
+                                                                                flexDirection: 'column',
                                                                                 width: '100%',
                                                                                 gap: '1rem',
+                                                                                borderRadius: '12px',
+                                                                                boxShadow: '0px 6px 6px -2px rgba(0, 0, 0, 0.2)',
+                                                                                paddingBottom: '.5rem',
                                                                             }}
                                                                         >
-                                                                            {pedidoItens[pedido.id]?.map(item => (
-                                                                                <LiOrderItens key={item.id}>
-                                                                                    <p><strong>{item.quantidade}x</strong>{` ${item.produto_nome}`}</p>
-                                                                                    <p>{``}</p>
-                                                                                    <p>
-                                                                                        {item.produto_preco !== undefined
-                                                                                            ? `Valor un.: R$${item.produto_preco.toFixed(2)}`
-                                                                                            : 'Valor un.: R$ER.ROR'}
-                                                                                    </p>
-                                                                                    {/* <p>
-                                                                                {item.produto_preco !== undefined
-                                                                                    ? `Subtotal: R$${(item.quantidade * item.produto_preco).toFixed(2)}`
-                                                                                    : 'Subtotal: R$ER.ROR'}
-                                                                            </p> */}
-                                                                                    <p>{`Observação: ${item.observacao || 'Nenhuma'}`}</p>
+                                                                            <div
+                                                                                style={{
+                                                                                    display: 'flex',
+                                                                                    flexDirection: 'row',
+                                                                                    alignItems: 'start',
+                                                                                    justifyContent: 'start',
+                                                                                    flexWrap: 'wrap',
+                                                                                    width: '100%',
+                                                                                    gap: '1rem',
+                                                                                }}
+                                                                            >
+                                                                                {pedidoItens[pedido.id]?.map(item => (
+                                                                                    <LiOrderItens key={item.id}>
+                                                                                        <p><strong>{item.quantidade}x</strong>{` ${item.produto_nome}`}</p>
+                                                                                        <p>{``}</p>
+                                                                                        <p>
+                                                                                            {item.produto_preco !== undefined
+                                                                                                ? `Valor un.: R$${item.produto_preco.toFixed(2)}`
+                                                                                                : 'Valor un.: R$ER.ROR'}
+                                                                                        </p>
 
-                                                                                </LiOrderItens>
-                                                                            ))}
-                                                                        </div>
-                                                                        <p
-                                                                            style={{
-                                                                                paddingLeft: '.5rem',
-                                                                            }}
-                                                                        >
-                                                                            <span><strong>Total pedido: </strong></span>
-                                                                            {`R$${pedidoItens[pedido.id]?.reduce(
-                                                                                (acc, item) =>
-                                                                                    acc + (item.produto_preco !== undefined ? item.quantidade * item.produto_preco : 0),
-                                                                                0
-                                                                            ).toFixed(2)}`}
-                                                                        </p>
-                                                                    </ul>
-                                                                )}
-                                                            </OrderFila>
-                                                        ))
-                                                )
-                                            }
-                                        </Orders>
-                                    </OrdersContainerAndamento>
-                                    <OrdersContainerProntos
-                                    >
-                                        <TitleOrder>Pedidos prontos</TitleOrder>
-                                        <Orders>
-                                            {
-                                                contextPedidos
-                                                    .filter(
-                                                        pedido =>
-                                                            pedido.status === 'pronto' &&
-                                                            pedido.cliente_id === Cookies.get('user_id')
-                                                    )
-                                                    .length === 0 ? (
-                                                    <p
-                                                        style={{
-                                                            textAlign: 'center',
-                                                        }}
-                                                    ><i>Nenhum pedido neste status.</i></p>
-                                                ) : (
-                                                    contextPedidos.filter(
-                                                        pedido =>
-                                                            pedido.status === 'pronto' &&
-                                                            pedido.cliente_id === Cookies.get('user_id')
-                                                    )
-                                                        .map((pedido: TypePedido) => (
-                                                            <OrderFila key={pedido.id}>
-                                                                <PedidoId><strong>Pedido:</strong> {`${pedido.id}`}</PedidoId>
-                                                                <p><strong>Sua mesa: </strong>{`${pedido.mesa}`}</p>
-                                                                {/* <p><strong>Status: </strong>{`${pedido.status ? 'Pedido em fila' : 'Problema com o status.'}`}</p> */}
-                                                                <ViewOrders onClick={() => toggleOrderItems(pedido.id)}>
-                                                                    {expandedOrders.includes(pedido.id) ? 'Esconder Itens' : 'Mostrar Itens'}
-                                                                </ViewOrders>
+                                                                                        <p>{`Observação: ${item.observacao || 'Nenhuma'}`}</p>
 
-                                                                {expandedOrders.includes(pedido.id) && (
-                                                                    <ul
-                                                                        style={{
-                                                                            display: 'flex',
-                                                                            flexDirection: 'column',
-                                                                            width: '100%',
-                                                                            gap: '1rem',
-                                                                            borderRadius: '12px',
-                                                                            boxShadow: '0px 6px 6px -2px rgba(0, 0, 0, 0.2)',
-                                                                            paddingBottom: '.5rem',
-                                                                        }}
-                                                                    >
-                                                                        <div
+                                                                                    </LiOrderItens>
+                                                                                ))}
+                                                                            </div>
+                                                                            <p
+                                                                                style={{
+                                                                                    paddingLeft: '.5rem',
+                                                                                }}
+                                                                            >
+                                                                                <span><strong>Total pedido: </strong></span>
+                                                                                {`R$${pedidoItens[pedido.id]?.reduce(
+                                                                                    (acc, item) =>
+                                                                                        acc + (item.produto_preco !== undefined ? item.quantidade * item.produto_preco : 0),
+                                                                                    0
+                                                                                ).toFixed(2)}`}
+                                                                            </p>
+                                                                        </ul>
+                                                                    )}
+                                                                </OrderFila>
+                                                            ))
+                                                    )
+                                                }
+                                            </Orders>
+                                        </OrdersContainerAndamento> */}
+                                        <PedidosEItens
+                                            status="pronto"
+                                            contextPedidos={contextPedidos}
+                                            pedidoItens={pedidoItens}
+                                        />
+                                        {/* <OrdersContainerProntos
+                                        >
+                                            <TitleOrder>Pedidos prontos</TitleOrder>
+                                            <Orders>
+                                                {
+                                                    contextPedidos
+                                                        .filter(
+                                                            pedido =>
+                                                                pedido.status === 'pronto' &&
+                                                                pedido.cliente_id === Cookies.get('user_id')
+                                                        )
+                                                        .length === 0 ? (
+                                                        <p
+                                                            style={{
+                                                                textAlign: 'center',
+                                                            }}
+                                                        ><i>Nenhum pedido neste status.</i></p>
+                                                    ) : (
+                                                        contextPedidos.filter(
+                                                            pedido =>
+                                                                pedido.status === 'pronto' &&
+                                                                pedido.cliente_id === Cookies.get('user_id')
+                                                        )
+                                                            .map((pedido: TypePedido) => (
+                                                                <OrderFila key={pedido.id}>
+                                                                    <PedidoId><strong>Pedido:</strong> {`${pedido.id}`}</PedidoId>
+                                                                    <p><strong>Sua mesa: </strong>{`${pedido.mesa}`}</p>
+                                                                    <ViewOrders onClick={() => toggleOrderItems(pedido.id)}>
+                                                                        {expandedOrders.includes(pedido.id) ? 'Esconder Itens' : 'Mostrar Itens'}
+                                                                    </ViewOrders>
+
+                                                                    {expandedOrders.includes(pedido.id) && (
+                                                                        <ul
                                                                             style={{
                                                                                 display: 'flex',
-                                                                                flexDirection: 'row',
-                                                                                alignItems: 'start',
-                                                                                justifyContent: 'start',
-                                                                                flexWrap: 'wrap',
+                                                                                flexDirection: 'column',
                                                                                 width: '100%',
                                                                                 gap: '1rem',
+                                                                                borderRadius: '12px',
+                                                                                boxShadow: '0px 6px 6px -2px rgba(0, 0, 0, 0.2)',
+                                                                                paddingBottom: '.5rem',
                                                                             }}
                                                                         >
-                                                                            {pedidoItens[pedido.id]?.map(item => (
-                                                                                <LiOrderItens key={item.id}>
-                                                                                    <p><strong>{item.quantidade}x</strong>{` ${item.produto_nome}`}</p>
-                                                                                    <p>{``}</p>
-                                                                                    <p>
-                                                                                        {item.produto_preco !== undefined
-                                                                                            ? `Valor un.: R$${item.produto_preco.toFixed(2)}`
-                                                                                            : 'Valor un.: R$ER.ROR'}
-                                                                                    </p>
-                                                                                    {/* <p>
-                                                                            {item.produto_preco !== undefined
-                                                                                ? `Subtotal: R$${(item.quantidade * item.produto_preco).toFixed(2)}`
-                                                                                : 'Subtotal: R$ER.ROR'}
-                                                                        </p> */}
-                                                                                    <p>{`Observação: ${item.observacao || 'Nenhuma'}`}</p>
+                                                                            <div
+                                                                                style={{
+                                                                                    display: 'flex',
+                                                                                    flexDirection: 'row',
+                                                                                    alignItems: 'start',
+                                                                                    justifyContent: 'start',
+                                                                                    flexWrap: 'wrap',
+                                                                                    width: '100%',
+                                                                                    gap: '1rem',
+                                                                                }}
+                                                                            >
+                                                                                {pedidoItens[pedido.id]?.map(item => (
+                                                                                    <LiOrderItens key={item.id}>
+                                                                                        <p><strong>{item.quantidade}x</strong>{` ${item.produto_nome}`}</p>
+                                                                                        <p>{``}</p>
+                                                                                        <p>
+                                                                                            {item.produto_preco !== undefined
+                                                                                                ? `Valor un.: R$${item.produto_preco.toFixed(2)}`
+                                                                                                : 'Valor un.: R$ER.ROR'}
+                                                                                        </p>
 
-                                                                                </LiOrderItens>
-                                                                            ))}
-                                                                        </div>
-                                                                        <p
-                                                                            style={{
-                                                                                paddingLeft: '.5rem',
-                                                                            }}
-                                                                        >
-                                                                            <span><strong>Total pedido: </strong></span>
-                                                                            {`R$${pedidoItens[pedido.id]?.reduce(
-                                                                                (acc, item) =>
-                                                                                    acc + (item.produto_preco !== undefined ? item.quantidade * item.produto_preco : 0),
-                                                                                0
-                                                                            ).toFixed(2)}`}
-                                                                        </p>
-                                                                    </ul>
-                                                                )}
-                                                            </OrderFila>
-                                                        ))
-                                                )
-                                            }
-                                        </Orders>
-                                    </OrdersContainerProntos>
-                                </div>
-                            ) : (
-                                <p style={{ textAlign: 'center' }}>Você não possui pedidos.</p>
-                            )}
-                        </div>
+                                                                                        <p>{`Observação: ${item.observacao || 'Nenhuma'}`}</p>
 
-                        <ButtonOpenCancel onClick={toggleOrder} style={{ marginTop: '20px', padding: '10px 20px' }}>
-                            Fechar
-                        </ButtonOpenCancel>
-                    </CartOpen>
-                </CartOpenContainer>
+                                                                                    </LiOrderItens>
+                                                                                ))}
+                                                                            </div>
+                                                                            <p
+                                                                                style={{
+                                                                                    paddingLeft: '.5rem',
+                                                                                }}
+                                                                            >
+                                                                                <span><strong>Total pedido: </strong></span>
+                                                                                {`R$${pedidoItens[pedido.id]?.reduce(
+                                                                                    (acc, item) =>
+                                                                                        acc + (item.produto_preco !== undefined ? item.quantidade * item.produto_preco : 0),
+                                                                                    0
+                                                                                ).toFixed(2)}`}
+                                                                            </p>
+                                                                        </ul>
+                                                                    )}
+                                                                </OrderFila>
+                                                            ))
+                                                    )
+                                                }
+                                            </Orders>
+                                        </OrdersContainerProntos> */}
+                                    </div>
+                                ) : (
+                                    <p style={{ textAlign: 'center' }}>Você não possui pedidos.</p>
+                                )}
+                            </div>
+
+                            <ButtonOpenCancel onClick={toggleOrder} style={{ marginTop: '20px', padding: '10px 20px' }}>
+                                Fechar
+                            </ButtonOpenCancel>
+                        </CartOpen>
+                    </CartOpenContainer>
+                </>
             )}
+
+            {/* Não necessário, já possui poucas linhas. */}
             {isCreateOrderOpen && (
                 <CartOpenContainer>
                     <CartOpen
@@ -930,6 +891,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt = 0, isGarcom 
                     </CartOpen>
                 </CartOpenContainer>
             )}
+
+            {/* Não necessário, já possui poucas linhas. */}
             {isMesaOpen && (
                 <CartOpenContainer>
                     <CartOpen
