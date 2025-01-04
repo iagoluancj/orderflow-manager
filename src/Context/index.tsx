@@ -2,49 +2,38 @@
 
 import { supabase } from "@/services/supabase";
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { CartItem, Produto, TypeCliente, TypeCozinha, TypeFuncionario, TypeItemPedido, TypePedido, TypeProduto } from "@/Types/types";
+import { CartItem, Produto, TypeAssociacoes, TypeCliente, TypeCozinha, TypeFuncionario, TypeItemPedido, TypePedido, TypeProduto } from "@/Types/types";
 import { createContext, ReactNode, useEffect, useState } from "react";
-import { toast } from "react-toastify";
 
 type SupaProviderProps = {
     children: ReactNode;
 };
 
 type SupaContextType = {
+    contextAssociacoes : TypeAssociacoes[];
+
     contextClient: TypeCliente[];
     contextPedidos: TypePedido[];
     contextItensPedido: TypeItemPedido[];
-    contextProdutos: TypeProduto[];
     contextFuncionarios: TypeFuncionario[];
-    contextCozinha: TypeCozinha[];
-    changeTheme: boolean;
     updateCliente: (clienteData: TypeCliente) => void;
     updatePedido: (pedidoId: number, userId: number, status: string) => void;
-    deleteFuncionario: (id: number, dateDeletedAt: Date) => void;
-    // createPedido: (pedidoData: Omit<TypePedido, 'id'>) => void;
-    // handleChangePage: (change: string) => void;
-    // handleChangeTheme: (theme: boolean) => void;
     cart: CartItem[];
-    addItemToCart: (item: Produto) => void; 
+    addItemToCart: (item: Produto) => void;
     removeItemFromCart: (itemId: number) => void;
     updateCartItem: (id: number, updatedFields: Partial<CartItem>) => void;
     clearCart: () => void;
 };
 
 export const SupaContext = createContext<SupaContextType>({
+    contextAssociacoes : [],
+
     contextClient: [],
     contextPedidos: [],
     contextItensPedido: [],
-    contextProdutos: [],
     contextFuncionarios: [],
-    contextCozinha: [],
-    changeTheme: false,
     updateCliente: () => { },
     updatePedido: () => { },
-    deleteFuncionario: () => { },
-    // createPedido: () => { },
-    // handleChangePage: () => { },
-    // handleChangeTheme: () => { },
     cart: [],
     addItemToCart: () => { },
     removeItemFromCart: () => { },
@@ -53,14 +42,13 @@ export const SupaContext = createContext<SupaContextType>({
 });
 
 const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
+    const [associacoes, setAssociacoes] = useState<TypeAssociacoes[]>([]);
+
     const [clientes, setClientes] = useState<TypeCliente[]>([]);
     const [pedidos, setPedidos] = useState<TypePedido[]>([]);
     const [itensPedido, setItensPedido] = useState<TypeItemPedido[]>([]); //Essa não é a melhor forma, a melhor forma é buscar o pedido por id. 
-    const [produtos, setProdutos] = useState<TypeProduto[]>([]);
     const [funcionarios, setFuncionarios] = useState<TypeFuncionario[]>([]);
-    const [cozinha, setCozinha] = useState<TypeCozinha[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
-    const [changeTheme, setChangeTheme] = useState(true);
 
     const updatePedido = async (pedidoId: number, userId: number, status: string) => {
         try {
@@ -88,49 +76,37 @@ const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
     const updateCliente = async (clienteData: TypeCliente) => {
         const { id, email, ...fieldsToUpdate } = clienteData;
 
-        const { data: existingEmail } = await supabase
-            .from('clientes')
-            .select('id')
-            .eq('email', email)
-            .single();
+        try {
+            const { data: existingEmail, error: emailError } = await supabase
+                .from('clientes')
+                .select('id')
+                .eq('email', email)
+                .single();
 
-        const { data, error } = await supabase
-            .from('clientes')
-            .update({ email, ...fieldsToUpdate })
-            .eq('id', id);
-
-        if (error) {
-            console.error("Ocorreu um erro ao tentar editar o cliente.");
-        } else {
-            console.log("Cliente editado com sucesso.");
-        }
-    };
-
-    const deleteFuncionario = async (id: number, dateDeletedAt: Date) => {
-        const userSession = JSON.parse(localStorage.getItem("userSession") || "{}");
-        const userId = userSession?.id;
-
-        if (id) {
-            try {
-                const { data, error } = await supabase
-                    .from('funcionarios')
-                    .update({
-                        deleted_at: dateDeletedAt,
-                        deleted_by: userId,
-                        updated_by: userId
-                    })
-                    .eq('id', id);
-
-                if (error) {
-                    console.error("Erro ao deletar o funcionário:", error);
-                    console.error("Ocorreu um erro ao tentar deletar o funcionário.");
-                } else {
-                    console.log("Funcionário deletado com sucesso!");
-                }
-            } catch (error) {
-                console.error("Erro ao se conectar com o servidor", error);
-                console.error("Erro ao se conectar com o servidor.");
+            if (emailError) {
+                console.error('Erro ao verificar e-mail existente:', emailError);
             }
+
+            if (existingEmail && existingEmail.id !== id) {
+                return { success: false, message: `E-mail já está em uso por outro cliente.` };
+            }
+
+            const { data, error } = await supabase
+                .from('clientes')
+                .update({ email, ...fieldsToUpdate })
+                .eq('id', id);
+
+            if (error) {
+                console.error('Erro ao atualizar o cliente:', error);
+                return { success: false, message: 'Erro ao tentar atualizar o cliente.' };
+            } else {
+                console.log('Cliente editado com sucesso.');
+                return { success: true, message: 'Cliente atualizado com sucesso.', data };
+            }
+
+        } catch (error) {
+            console.error('Erro inesperado:', error);
+            return { success: false, message: 'Ocorreu um erro inesperado ao atualizar o cliente.' };
         }
     };
 
@@ -171,6 +147,16 @@ const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
     };
 
     useEffect(() => {
+        const getAllAssociacoes = async () => {
+            const { data: associacoesData } = await supabase
+                .from('associacoesmesas')
+                .select('*')
+                .order('id')
+                .returns<TypeAssociacoes[]>();
+
+            return { associacoesData };
+        };
+
         const getAllClientes = async () => {
             const { data: clienteData } = await supabase
                 .from('clientes')
@@ -212,6 +198,9 @@ const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
         };
 
         (async () => {
+            const { associacoesData } = await getAllAssociacoes();
+            setAssociacoes(associacoesData || []);
+
             const { clienteData } = await getAllClientes();
             setClientes(clienteData || []);
 
@@ -220,10 +209,26 @@ const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
 
             const { pedidosData } = await getAllPedidos();
             setPedidos(pedidosData || []);
-            
+
             const { itensPedidoData } = await getAllItensPedido();
             setItensPedido(itensPedidoData || []);
         })();
+
+        const associacoesChannel = supabase
+        .channel('associacoesmesas-db-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'associacoesmesas',
+            },
+            (payload) => {
+                console.log('Change received for associacoes:', payload);
+                getAllAssociacoes().then(({ associacoesData }) => setAssociacoes(associacoesData || []));
+            }
+        )
+        .subscribe();
 
         const clientesChannel = supabase
             .channel('clientes-db-changes')
@@ -273,7 +278,7 @@ const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
             )
             .subscribe();
 
-            const itensPedidoChannel = supabase
+        const itensPedidoChannel = supabase
             .channel('itenspedido-db-changes')
             .on(
                 'postgres_changes',
@@ -291,6 +296,7 @@ const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
 
         return () => {
             clientesChannel.unsubscribe();
+            associacoesChannel.unsubscribe();
             funcChannel.unsubscribe();
             pedidoChannel.unsubscribe();
             itensPedidoChannel.unsubscribe();
@@ -302,15 +308,12 @@ const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
             value={{
                 contextClient: clientes,
                 contextPedidos: pedidos,
+                contextAssociacoes: associacoes,
                 contextItensPedido: itensPedido,
-                contextProdutos: produtos,
                 contextFuncionarios: funcionarios,
-                contextCozinha: cozinha,
-                changeTheme,
-                cart, 
+                cart,
                 updatePedido,
                 updateCliente,
-                deleteFuncionario,
                 updateCartItem,
                 addItemToCart,
                 removeItemFromCart,

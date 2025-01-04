@@ -151,8 +151,7 @@ export const Input = styled.input`
     border-color: #4caf50;
     box-shadow: 0 0 4px rgba(76, 175, 80, 0.3);
   }
-`;
-
+`
 export const ConfirmButton = styled.button`
   padding: 0.8rem 1.5rem;
   background-color: #4caf50;
@@ -175,8 +174,15 @@ export const ConfirmButton = styled.button`
   &:active {
     background-color: #3e8e41;
   }
-`;
-
+`
 export const FailedChoosingTable = styled.div`
   margin-top: 5rem;
-`;
+`
+export const ClienteContainer = styled.div`
+ display: flex;
+ align-items:  center;
+ justify-content: center;
+ flex-direction: column;
+
+ width: 100%;
+`

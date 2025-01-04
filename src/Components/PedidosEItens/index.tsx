@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import Cookies from 'js-cookie';
-import { ButtonOpenCancel, ButtonOpenConfirm, CartOpen, CartOpenContainer, LiOrderItens, Order, Orders, OrdersContainer, PedidoId, TitleOrder, ViewOrders } from '../Navbar/styles';
+import { ButtonOpenCancel, ButtonOpenConfirm, CartOpen, CartOpenContainer, ContainerButtons, LiOrderItens, Order, Orders, OrdersContainer, PedidoId, TitleOrder, ViewOrders } from '../Navbar/styles';
 import { TypeItemPedido, TypePedido } from '@/Types/types';
 import { Title } from '../Cardapio/styles';
 import { FaCheck } from 'react-icons/fa';
@@ -12,6 +12,44 @@ type Props = {
     contextPedidos: TypePedido[];
     pedidoItens: { [key: number]: TypeItemPedido[] };
     isGarcom?: boolean;
+};
+
+const statusActions: {
+    [key in 'aguard_aprovacao' | 'pronto' | 'em_fila' | 'em_andamento' | 'cancelado' | 'pedido_negado' | 'encerrado']?: {
+        confirmAction: string;
+        confirmText: string;
+        cancelAction: string;
+        cancelText: string;
+    };
+} = {
+    aguard_aprovacao: {
+        confirmAction: 'em_fila',
+        confirmText: 'Aprovar Pedido',
+
+        cancelAction: 'reprovar',
+        cancelText: 'Reprovar Pedido',
+    },
+    pronto: {
+        confirmAction: 'encerrado',
+        confirmText: 'Finalizar Pedido',
+
+        cancelAction: 'cancelar',
+        cancelText: 'Cancelar Pedido',
+    },
+    em_fila: {
+        confirmAction: 'em_andamento',
+        confirmText: 'Iniciar Pedido',
+
+        cancelAction: 'cancelar',
+        cancelText: 'Cancelar Pedido',
+    },
+    em_andamento: {
+        confirmAction: 'pronto',
+        confirmText: 'Pedido Pronto',
+        
+        cancelAction: 'cancelar',
+        cancelText: 'Cancelar Pedido',
+    },
 };
 
 const PedidosEItens: React.FC<Props> = ({ status, contextPedidos, pedidoItens, isGarcom }) => {
@@ -27,6 +65,13 @@ const PedidosEItens: React.FC<Props> = ({ status, contextPedidos, pedidoItens, i
         );
     };
 
+
+    const toggleMesa = (acao: string, pedidoId: number) => {
+        setHandleAcao(acao)
+        setCurrentPedidoId(pedidoId)
+        setIsMesaOpen(!isMesaOpen);
+    }
+
     const handleAlterarStatusPedido = (pedidoId: number, status: string) => {
         const email = Cookies.get('email_func');
         const funcionario = contextFuncionarios.find((funcionario) => funcionario.email === email);
@@ -36,15 +81,9 @@ const PedidosEItens: React.FC<Props> = ({ status, contextPedidos, pedidoItens, i
             return;
         }
 
-        // setIsMesaOpen(isMesaOpen)
+        setIsMesaOpen(!isMesaOpen)
         updatePedido(pedidoId, funcionario.id, status);
     };
-
-    const toggleMesa = (acao: string, pedidoId: number) => {
-        setHandleAcao(acao)
-        setCurrentPedidoId(pedidoId)
-        setIsMesaOpen(!isMesaOpen);
-    }
 
     return (
         <OrdersContainer $borderStatus={status}>
@@ -132,31 +171,37 @@ const PedidosEItens: React.FC<Props> = ({ status, contextPedidos, pedidoItens, i
                                             </p>
                                         </ul>
                                     )}
-                                    {isGarcom && (pedido.status === 'aguard_aprovacao' || pedido.status === 'pronto') && (
-
-                                        <>
-                                            <ButtonOpenConfirm
-                                                style={{
-                                                    padding: "10px 20px",
-                                                    background: '#4CAF50',
-                                                }}
-                                                onClick={() => handleAlterarStatusPedido(pedido.id, pedido.status === 'aguard_aprovacao' ? 'em_fila' : 'finalizado'
-                                                )}
-                                            >
-                                                {pedido.status === 'aguard_aprovacao' ? 'Aprovar Pedido' : 'Finalizar Pedido'}
-                                            </ButtonOpenConfirm>
-                                            <ButtonOpenCancel
-                                                onClick={() => toggleMesa(pedido.status === 'aguard_aprovacao' ? 'reprovar' : 'cancelar', pedido.id)}
-                                                style={{ padding: '8px' }}>
-                                                {pedido.status === 'aguard_aprovacao' ? 'Reprovar Pedido' : 'Cancelar Pedido'}
-                                            </ButtonOpenCancel>
-                                        </>
-                                    )}
+                                    {
+                                        isGarcom && statusActions[pedido.status] && (
+                                            <ContainerButtons>
+                                                <ButtonOpenConfirm
+                                                    style={{
+                                                        padding: '8px',
+                                                        background: '#4CAF50',
+                                                    }}
+                                                    onClick={() =>
+                                                        handleAlterarStatusPedido(pedido.id, statusActions[pedido.status]!.confirmAction
+                                                        )
+                                                    }
+                                                >
+                                                    {statusActions[pedido.status]!.confirmText}
+                                                </ButtonOpenConfirm>
+                                                <ButtonOpenCancel
+                                                    onClick={() =>
+                                                        toggleMesa(statusActions[pedido.status]!.cancelAction, pedido.id)
+                                                    }
+                                                    style={{ padding: '8px' }}
+                                                >
+                                                    {statusActions[pedido.status]!.cancelText}
+                                                </ButtonOpenCancel>
+                                            </ContainerButtons>
+                                        )}
                                 </Order>
                             ))
                     )
                 }
             </Orders>
+
             {isMesaOpen && (
                 <CartOpenContainer>
                     <CartOpen

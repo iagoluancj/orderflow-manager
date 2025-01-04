@@ -122,10 +122,6 @@ export default function Cardapio() {
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Pesquise oque você deseja" />
           </SearchBar>
-          {/* <HeaderDescription>
-            Escolha, personalize e finalize seus pedidos sem complicações.
-            Praticidade na palma da sua mão, enquanto você aproveita o que realmente importa.
-          </HeaderDescription> */}
         </HeaderContent>
       </Header>
 
@@ -137,7 +133,6 @@ export default function Cardapio() {
             <CategoriesContainer>
               <CategoriesHeader>
                 <CategoriesTitle> Categorias </CategoriesTitle>
-                {/* <ViewMore>Ver mais <span>+</span></ViewMore> */}
               </CategoriesHeader>
               <CategoriesList>
                 <CategoryItem onClick={scrollToMassas}>
@@ -197,29 +192,6 @@ export default function Cardapio() {
                 )
               })
             )}
-            {/* <MenuItem>
-              <MenuItemImage><Image src={itemSeila} alt="Image item ${itemhere}"></Image></MenuItemImage>
-              <MenuItemDetails>
-                <MenuItemTitle>X-Salada</MenuItemTitle>
-                <MenuItemDescription>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.</MenuItemDescription>
-                <MenuItemQuantityContainer>
-                  <MenuItemQuantity>- 1 +</MenuItemQuantity>
-                  <MenuItemPrice>R$ 26,00</MenuItemPrice>
-                </MenuItemQuantityContainer>
-              </MenuItemDetails>
-            </MenuItem>
-            <MenuItem>
-              <MenuItemImage><Image src={itemSeila} alt="Image item ${itemhere}"></Image></MenuItemImage>
-              <MenuItemDetails>
-                <MenuItemTitle>X-Salada Salada SaladaSalada</MenuItemTitle>
-                <MenuItemDescription>Delicioso hamburguer engana  vegano, vai com duas carnes</MenuItemDescription>
-                <MenuItemQuantityContainer>
-                  <MenuItemQuantity>- 1 +</MenuItemQuantity>
-                  <MenuItemPrice>R$ 26,00</MenuItemPrice>
-                </MenuItemQuantityContainer>
-              </MenuItemDetails>
-            </MenuItem> */}
           </MenuList>
           <H3 ref={massasRef}>Massas</H3>
           <MenuList>
@@ -257,29 +229,6 @@ export default function Cardapio() {
 
         </MenuContainer>
       </Categories>
-
-      {/* <Container>
-        <Title></Title>
-        <MenuWrapper>
-          <Title>Porções</Title>
-          <MenuContainerWrapper>
-            {items.map((item: Produto) => (
-              <Card key={item.id}>
-                <CardImage src={cardImage.src} alt={item.nome} />
-                <CardTitle>{item.nome}</CardTitle>
-                <CardDescription>Pow, não sei oq, maior detalhamento aqui, e tal ta ligado?</CardDescription>
-                <CardPrice>R$ {item.preco}</CardPrice>
-                <Seila>
-                  <span>+</span>
-                  <OrderButton onClick={() => addItemToCart(item)}>Adicionar ao Pedido</OrderButton>
-                  <OrderButton onClick={() => removeItemFromCart(item.id)}>Remover</OrderButton>
-                  <span>-</span>
-                </Seila>
-              </Card>
-            ))}
-          </MenuContainerWrapper>
-        </MenuWrapper>
-      </Container> */}
 
       <ButtonChamarGarcom onClick={callWaiter} disabled={loading} $isLoading={loading}>
         <FaConciergeBell size={24} />

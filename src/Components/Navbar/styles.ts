@@ -189,7 +189,7 @@ export const ButtonOpenCancel = styled(NavButton)`
 
 export const ButtonOpenConfirm = styled(NavButton)`
   width: unset;
-  margin: 0rem 0rem;
+  margin: 1rem 0rem; 
   border: 1px solid transparent !important;
 
 &:hover {
@@ -206,6 +206,14 @@ export const ButtonOpenConfirm = styled(NavButton)`
       color: white !important;
       transition: .2s ease-in;
   }
+`
+
+export const ContainerButtons = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+
+  width: 100%;
 `
 
 export const CartOpenContainer = styled.div`

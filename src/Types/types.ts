@@ -73,3 +73,20 @@ export interface CartItem extends Produto {
   quantidade: number; 
   observacao?: string;
 }
+
+export type TypeMesa = {
+  id: number;
+  name: string;
+  capacity: number;
+  style: React.CSSProperties;
+};
+
+export type TypeAssociacoes = {
+  id: number;
+  mesa_id: number;
+  inicio_ocupacao: string; 
+  fim_ocupacao: string; 
+  usuario_id: string; 
+  created_at: string; 
+  updated_at: string; 
+};

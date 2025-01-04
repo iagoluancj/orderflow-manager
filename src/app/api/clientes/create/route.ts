@@ -26,11 +26,11 @@ export async function POST(request: Request) {
 
         if (existingCliente && existingCliente.length) {
             console.log('Cliente já cadastrado:', existingCliente);
-            // Cookies.set("token", data.token, { expires: 1, sameSite: 'strict' });
+            // Cookies.set("token", data.token, { expires: 1, sameSite: 'strict' }); a
             // Cookies.set("user", existingCliente, { expires: 1, sameSite: 'strict' });
             return NextResponse.json(
                 { message: 'Usuário já cadastrado no sistema.', cliente: existingCliente[0] },
-                { status: 201 } 
+                { status: 202 } 
             );
         }
 

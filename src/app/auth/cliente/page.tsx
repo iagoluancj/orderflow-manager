@@ -6,66 +6,33 @@ import Cookies from 'js-cookie';
 import { toast } from "react-toastify";
 import NavbarComponent from "@/Components/Navbar";
 import Cardapio from "@/Components/Cardapio/page";
-import { ChoosingPadding, ChoosingTable, ConfirmButton, ContainerChoosingTable, Description, FailedChoosingTable, Title } from "./styles";
-import { MdOutlineReportProblem } from "react-icons/md";
+import MapMesas from "@/Components/MapMesas";
+import { ClienteContainer } from "./styles";
 
 export default function Cliente() {
   const { contextPedidos } = useContext(SupaContext);
   const [lastPedidoId, setLastPedidoId] = useState<number | null>(null);
-  const [novaMesa, setNovaMesa] = useState(Cookies.get("mesa") || "");
-  const { cart } = useContext(SupaContext);
-  const [loading, setLoading] = useState(false);
-  const [mesa, setMesa] = useState(false)
+  const [mesas, setMesas] = useState<{ id: number; capacity: number; style: React.CSSProperties, name: string }[]>([]);
+  const { cart, contextAssociacoes } = useContext(SupaContext);
   const userId = Cookies.get('user_id');
-
-  const handleSetMesa = () => {
-    if (!novaMesa) {
-      toast.error("Por favor, insira um número de mesa válido.");
-      return;
-    }
-
-    setMesa(true)
-    Cookies.set("mesa", novaMesa);
-    localStorage.setItem("mesa", novaMesa);
-    toast.success(`Você está na mesa ${novaMesa}, aproveite!`);
-  };
-
-  const callWaiter = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/waiter-request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ mesaId: 'Cliente com problemas para selecionar a mesa, procure o cliente de braço levantado.' }),
-      });
-
-      if (response.ok) {
-        toast.info("Garçom chamado, fique com o braço levantado para fácil identificação.");
-      } else {
-        toast.error("Erro ao chamar o garçom.");
-      }
-    } catch (error) {
-      console.error("Erro ao chamar o garçom:", error);
-      toast.error("Erro ao se conectar ao servidor.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const mesa = Cookies.get('mesa');
 
   useEffect(() => {
-    const mesaCookie = Cookies.get("mesa");
-    const mesaLocal = localStorage.getItem("mesa");
+    const fetchMesas = async () => {
+      try {
+        const responseMesas = await fetch('/api/mesas');
+        const mesasResult = await responseMesas.json();
+        if (responseMesas.ok) {
+          setMesas(mesasResult);
+        }
+      } catch (error) {
+        console.error('Erro ao conectar ao servidor:', error);
+      }
+    };
 
-    if (mesaCookie) {
-      setMesa(true)
-      setNovaMesa(mesaCookie);
-    } else if (mesaLocal) {
-      setNovaMesa(mesaLocal);
-      Cookies.set("mesa", mesaLocal);
-    }
-  }, []);
+    fetchMesas(); // Chama a busca de mesas uma vez
+
+  }, [contextAssociacoes]); // Executa apenas uma vez ao carregar
 
   useEffect(() => {
     if (!contextPedidos || contextPedidos.length === 0) return;
@@ -117,31 +84,11 @@ export default function Cliente() {
             <Cardapio />
           </>
         ) : (
-          <ContainerChoosingTable>
-            <NavbarComponent message="Defina sua mesa" />
-
-            <ChoosingPadding>
-              <ChoosingTable>
-                <Title>É um prazer ter você conosco.</Title>
-                <Description>
-                  <br />
-                  O número da mesa fica em X lugar.
-                  <input type="number" maxLength={10} value={novaMesa} onChange={(e) => setNovaMesa(e.target.value)} placeholder="Informe o número da mesa aqui." />
-                </Description>
-                <ConfirmButton onClick={handleSetMesa}>
-                  Confirmar mesa
-                </ConfirmButton>
-                <FailedChoosingTable>
-                  <Description>
-                    <button onClick={callWaiter} disabled={loading}>
-                      <MdOutlineReportProblem size={25} />
-                      Problemas ao selecionar a mesa? Chame o garçom.
-                    </button>
-                  </Description>
-                </FailedChoosingTable>
-              </ChoosingTable>
-            </ChoosingPadding>
-          </ContainerChoosingTable>
+          <ClienteContainer>
+            <NavbarComponent message='Escolha sua mesa' cartQt={cart.length} deleteAll={true} />
+            <h1>Bem-vindo ao [Nome do Restaurante]!</h1>
+            <MapMesas isGarcom={false} />
+          </ClienteContainer>
         )
       }
     </>

@@ -19,3 +19,9 @@ export const GarcomContainer = styled.div`
 export const GarcomWrapper = styled.div`
 `;
 
+export const Container = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+`;
+
