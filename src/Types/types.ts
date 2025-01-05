@@ -35,6 +35,8 @@ export type Produto = {
   id: number;
   nome: string;
   preco: number;
+  quantidade: number; 
+  categoria?: string;
   descricao?: string;
   created_at: Date;
   updated_at?: Date;

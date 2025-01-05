@@ -4,7 +4,6 @@ import { supabase } from '@/services/supabase';
 
 export async function GET(request: Request) {
     try {
-        // Busca todas as mesas com seus respectivos status (livre/ocupada)
         const { data, error } = await supabase
             .from('associacoesmesas')
             .select(`
@@ -40,7 +39,6 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { mesa_id, inicio_ocupacao, usuario_id } = body;
 
-        // Validação básica dos campos
         if (!mesa_id || !inicio_ocupacao) {
             return NextResponse.json(
                 { message: 'Campos obrigatórios não fornecidos.' },
@@ -48,7 +46,6 @@ export async function POST(request: Request) {
             );
         }
 
-        // Inserir a nova associação na tabela associacoes_mesas
         const { data, error } = await supabase
             .from('associacoesmesas')
             .insert({
@@ -87,7 +84,6 @@ export async function PUT(request: Request) {
         const body = await request.json();
         const { usuario_id, fim_ocupacao } = body;
 
-        // Validação básica dos campos
         if (!usuario_id || !fim_ocupacao) {
             return NextResponse.json(
                 { message: 'Campos obrigatórios não fornecidos.' },
@@ -95,7 +91,6 @@ export async function PUT(request: Request) {
             );
         }
 
-        // Atualizar a associação onde fim_ocupacao é NULL para o usuário especificado
         const { data, error } = await supabase
             .from('associacoesmesas')
             .update({ fim_ocupacao })

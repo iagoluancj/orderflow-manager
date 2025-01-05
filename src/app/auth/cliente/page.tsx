@@ -12,27 +12,9 @@ import { ClienteContainer } from "./styles";
 export default function Cliente() {
   const { contextPedidos } = useContext(SupaContext);
   const [lastPedidoId, setLastPedidoId] = useState<number | null>(null);
-  const [mesas, setMesas] = useState<{ id: number; capacity: number; style: React.CSSProperties, name: string }[]>([]);
-  const { cart, contextAssociacoes } = useContext(SupaContext);
+  const { cart } = useContext(SupaContext);
   const userId = Cookies.get('user_id');
   const mesa = Cookies.get('mesa');
-
-  useEffect(() => {
-    const fetchMesas = async () => {
-      try {
-        const responseMesas = await fetch('/api/mesas');
-        const mesasResult = await responseMesas.json();
-        if (responseMesas.ok) {
-          setMesas(mesasResult);
-        }
-      } catch (error) {
-        console.error('Erro ao conectar ao servidor:', error);
-      }
-    };
-
-    fetchMesas(); // Chama a busca de mesas uma vez
-
-  }, [contextAssociacoes]); // Executa apenas uma vez ao carregar
 
   useEffect(() => {
     if (!contextPedidos || contextPedidos.length === 0) return;
@@ -85,9 +67,8 @@ export default function Cliente() {
           </>
         ) : (
           <ClienteContainer>
-            <NavbarComponent message='Escolha sua mesa' cartQt={cart.length} deleteAll={true} />
-            <h1>Bem-vindo ao [Nome do Restaurante]!</h1>
-            <MapMesas isGarcom={false} />
+            <NavbarComponent message='Mapa das mesas' cartQt={cart.length} deleteAll={true} />
+            <MapMesas />
           </ClienteContainer>
         )
       }

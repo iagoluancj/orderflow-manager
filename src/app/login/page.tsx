@@ -86,6 +86,7 @@ export default function Login() {
       const result = await response.json();
 
       if (response.ok) {
+        Cookies.set("user", formData.nome, { expires: 1, sameSite: 'strict' });
         Cookies.set("user_id", result.cliente.id, { expires: 1, sameSite: 'strict' });
         setTimeout(() => {
           router.push('/auth/cliente');

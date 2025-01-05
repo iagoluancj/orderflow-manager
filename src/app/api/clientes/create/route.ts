@@ -51,7 +51,7 @@ export async function POST(request: Request) {
             console.log('Cliente criado com sucesso:', data[0]);
             return NextResponse.json(
                 { message: 'Cliente criado com sucesso!', cliente: data[0] },
-                { status: 201 } // Criado
+                { status: 201 } 
             );
         }
     } catch (error) {

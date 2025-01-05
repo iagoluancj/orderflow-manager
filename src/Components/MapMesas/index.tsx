@@ -3,34 +3,42 @@
 import { SupaContext } from "@/Context";
 import { useContext, useEffect, useState } from "react";
 import Cookies from 'js-cookie';
-import { toast } from "react-toastify";
 import restaurant from '../../assets/mesa.png'
-import { FaChair, FaCheck } from "react-icons/fa";
-import { MdOutlineEventBusy, MdOutlineReportProblem, MdTouchApp } from "react-icons/md";
+import { FaChair, FaCheck, FaRegQuestionCircle } from "react-icons/fa";
+import { MdOutlineEventBusy, MdOutlineReportProblem, MdOutlineTableBar, MdTouchApp } from "react-icons/md";
 import { TypeMesa } from "@/Types/types";
-import { ButtonCallWaiter, ButtonProsseguir, ChairSection, Container, DivContainer, NameTable, TableContainer, Tables } from "./styles";
-import { FcRotateToPortrait } from "react-icons/fc";
+import { ButtonCallWaiter, ButtonDescriptionDuvida, ButtonProsseguir, ButtonsActionContainer, ChairSection, ConfirmMesa, ConfirmMesaContainer, Container, Description, DescriptionCores, DescriptionDuvida, DescriptionDuvidaContainer, DivContainer, FilterChairContainer, FindMesas, InputChair, NameTable, TableContainer, Tables } from "./styles";
 import { LuCalendarCheck2 } from "react-icons/lu";
-import { ButtonOpenCancel, ButtonOpenConfirm, CartOpen, CartOpenContainer } from "../Navbar/styles";
+import { ButtonOpenCancel, ButtonOpenConfirm } from "../Navbar/styles";
 import { Title } from "../Cardapio/styles";
-import { IoMdClose } from "react-icons/io";
+import { IoIosArrowDown, IoIosArrowUp, IoMdClose } from "react-icons/io";
+import { showToast } from "@/lib/ToastProvider";
 
-export default function MapMesas({ isGarcom }: { isGarcom?: boolean }) {
+export default function MapMesas() {
     const [selectedTable, setSelectedTable] = useState<{ id: number, name: string; capacity: number; } | null>(null);
     const [confirmMesa, setConfirmMesa] = useState(false);
+    const [filteredTablesCount, setFilteredTablesCount] = useState(0);
+    const [hasSearched, setHasSearched] = useState(false);
+    const [showDescription, setShowDescription] = useState(false);
+    const [filterCapacity, setFilterCapacity] = useState<number | null>(null);
     const [mesas, setMesas] = useState<{ id: number; capacity: number; style: React.CSSProperties, name: string }[]>([]);
     const { contextAssociacoes } = useContext(SupaContext);
     const [loading, setLoading] = useState(false);
     const userId = Cookies.get('user_id');
+    const user = Cookies.get('user');
+    const firstName = user ? user.split(' ')[0].charAt(0).toUpperCase() + user.split(' ')[0].slice(1).toLowerCase() : '';
 
     const toggleConfirmMesa = () => {
         if (selectedTable) {
             setConfirmMesa(!confirmMesa);
         } else {
-            toast.info('Selecione uma mesa para prosseguir!');
+            showToast("Selecione uma mesa para prosseguir!", "info");
         }
     }
 
+    const toggleDescription = () => {
+        setShowDescription(!showDescription);
+    };
 
     const handleTableClick = (mesa: { id: number; name: string; capacity: number; style: React.CSSProperties; }) => {
         setSelectedTable({
@@ -39,13 +47,14 @@ export default function MapMesas({ isGarcom }: { isGarcom?: boolean }) {
             capacity: mesa.capacity,
         });
     };
+
     const handleProsseguir = async () => {
         const mesaAssociadaAtiva = contextAssociacoes.some(
             (assoc) => assoc.usuario_id === userId && !assoc.fim_ocupacao
         );
 
         if (mesaAssociadaAtiva) {
-            toast.error('Você já está associado a uma mesa. Por favor, finalize a ocupação atual antes de selecionar outra.');
+            showToast("Você já está associado a uma mesa. Por favor, finalize a ocupação atual antes de selecionar outra.", "error");
             return;
         }
 
@@ -57,10 +66,12 @@ export default function MapMesas({ isGarcom }: { isGarcom?: boolean }) {
             });
 
             Cookies.set("mesa", String(selectedTable?.id), { expires: 2 });
-            toast.success('Mesa selecionada com sucesso!');
+            showToast("Mesa selecionada com sucesso!.", "success");
+
         } catch (error) {
             console.error('Erro ao criar associação:', error);
-            toast.error('Erro ao associar-se a mesa.');
+            showToast("Erro ao associar-se a mesa.", "error");
+
         } finally {
             setConfirmMesa(!confirmMesa);
         }
@@ -78,16 +89,38 @@ export default function MapMesas({ isGarcom }: { isGarcom?: boolean }) {
             });
 
             if (response.ok) {
-                toast.info("Garçom chamado, fique com o braço levantado para fácil identificação.");
+                showToast("Garçom chamado, fique com o braço levantado para fácil identificação.", "info");
             } else {
-                toast.error("Erro ao chamar o garçom.");
+                showToast("Erro ao chamar o garçom.", "error");
             }
         } catch (error) {
             console.error("Erro ao chamar o garçom:", error);
-            toast.error("Erro ao se conectar ao servidor.");
+            showToast("Erro ao se conectar ao servidor.", "error");
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value ? parseInt(event.target.value, 10) : null;
+        setFilterCapacity(value);
+
+        const count = mesas.filter((mesa) => {
+            if (value === null) return false;
+            return mesa.capacity >= value;
+        }).length;
+
+        // Atualiza a contagem de mesas filtradas
+        setFilteredTablesCount(count);
+
+        // Gerencia a mensagem de busca
+        setHasSearched(value !== null);
+    };
+
+    // Função para determinar se a mesa atende ao filtro
+    const isMesaHighlighted = (mesa: { capacity: number }) => {
+        if (filterCapacity === null) return false;
+        return mesa.capacity >= filterCapacity;
     };
 
     useEffect(() => {
@@ -189,7 +222,7 @@ export default function MapMesas({ isGarcom }: { isGarcom?: boolean }) {
                                 backgroundColor = '#ff000050';
                                 break;
                             case 'recém-liberada':
-                                backgroundColor = '#ffa50050';
+                                backgroundColor = '#15ff0050';  //Cor de 'recem-liberada original #ffa50050 
                                 break;
                             default:
                                 backgroundColor = '#ccc';
@@ -212,127 +245,166 @@ export default function MapMesas({ isGarcom }: { isGarcom?: boolean }) {
     return (
         <>
             <Container>
-                <h1>Olá, userNameCookies!</h1>
-                <p>Escolha a mesa ideal para você e seus convidados!</p>
+                <h1>Olá, {firstName}!</h1>
+                <p>
+                    <span>Escolha</span> <span>a</span> <span>mesa</span> <span>ideal</span> <span>para</span> <span>você</span> <span>e</span> <span>seus</span> <span>convidados!</span>
+                </p>
                 <DivContainer>
-                    <p><MdTouchApp />
-                        Toque ou clique na mesa para selecioná-la.</p>
-                    <TableContainer>
+                    <FilterChairContainer>
+                        <FaChair size={30} />
+                        <InputChair
+                            type="number"
+                            id="capacity-filter"
+                            placeholder="Quantas cadeiras deseja?"
+                            onChange={handleFilterChange}
+                        />
+                        <FindMesas style={{ color: hasSearched ? '#ededed' : '#3f3f3f' }} >
+                            <i>{hasSearched ? `${filteredTablesCount} mesas encontradas.` : ''}</i>
+                        </FindMesas>
+                    </FilterChairContainer>
 
+                    <TableContainer>
                         <Tables>
                             <img src={restaurant.src} alt="Restaurant Tables" />
-                            {mesas.map((mesa) => (
-                                <div
-                                    key={mesa.id}
-                                    className="table-area"
-                                    onClick={() => {
-                                        if (mesa.style.backgroundColor !== '#ff000050') {
-                                            handleTableClick(mesa);
-                                        } else {
-                                            toast.info("Essa mesa está ocupada no momento.");
-                                        }
-                                    }} style={{
-                                        // Agora vou colocar o seguinte, de acordo com a cor do bakcgroup, o coursor, a transform, tudo, será desabilitado.
-                                        ...mesa.style,
-                                        backgroundColor: selectedTable?.id === mesa.id ? '#0000FF50' : mesa.style.backgroundColor, // Destacar mesa selecionada ou manter o status de ocupação
-                                        borderRadius: '10px',
-                                        border: selectedTable?.id === mesa.id ? '1px solid blue' : '1px solid gray',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '30px',
-                                        transform: selectedTable?.id === mesa.id ? 'scale(1.1)' : 'scale(1)',
-                                    }}
-                                >
-                                    <span>
-                                        <NameTable>
-                                            {mesa.name}<br />
-                                            <ChairSection>
-                                                <FaChair />
-                                                {mesa.capacity}
-                                            </ChairSection>
-                                        </NameTable>
-                                    </span>
-                                </div>
-                            ))}
+                            {mesas.map((mesa) => {
+                                const isHighlighted = isMesaHighlighted(mesa);
+                                const isOcupada = mesa.style.backgroundColor === '#ff000050';
+                                const isSelecionada = selectedTable?.id === mesa.id;
+                                return (
+                                    <div
+                                        key={mesa.id}
+                                        className="table-area"
+                                        onClick={() => {
+                                            if (mesa.style.backgroundColor !== '#ff000050') {
+                                                handleTableClick(mesa);
+                                            } else {
+                                                showToast("Essa mesa está ocupada no momento.", "info");
+                                            }
+                                        }} style={{
+                                            // Agora vou colocar o seguinte, de acordo com a cor do bakcgroup, o coursor, a transform, tudo, será desabilitado.
+                                            ...mesa.style,
+                                            backgroundColor: isOcupada
+                                                ? '#ff000050' // Preserva vermelho para mesas ocupadas
+                                                : isSelecionada
+                                                    ? '#0000FF80' // Azul para mesa selecionada
+                                                    : isHighlighted
+                                                        ? '#0000FF30' // Amarelo para destaque
+                                                        : mesa.style.backgroundColor, // Padrão
+                                            borderRadius: '10px',
+                                            border: selectedTable?.id === mesa.id ? '1px solid blue' : '1px solid gray',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '30px',
+                                            transform: selectedTable?.id === mesa.id ? 'scale(1.1)' : 'scale(1)',
+                                        }}
+                                    >
+                                        <span>
+                                            <NameTable>
+                                                <ChairSection>
+                                                    <MdOutlineTableBar size={20} />
+                                                    {mesa.name}<br />
+                                                </ChairSection>
+                                                <ChairSection>
+                                                    <FaChair />
+                                                    {mesa.capacity}
+                                                </ChairSection>
+                                            </NameTable>
+                                        </span>
+                                    </div>
+                                )
+                            })}
                         </Tables>
                     </TableContainer>
-                    {/* Compreendo que isso pode gerar certa 'confusão mental' no usuário, pois ele poderá 
-                    se perguntar: 'Por que existem mesas amarelas?'. No entanto, deixarei dessa forma 
-                    para observar qual será o comportamento exato em produção, já prevendo que, 
-                    provavelmente, essa função dos recém-liberados ficará restrita ao garçom. */}
-                    <p>
 
-                        Mesas disponíveis estão destacadas em <strong><LuCalendarCheck2 />
-                            verde</strong> e <strong>Amarelo</strong>, ocupadas em <strong>vermelho <MdOutlineEventBusy /></strong>, e sua seleção aparecerá em <strong>azul</strong>.</p>
+                    <Description>
+                        <MdTouchApp size={16} />
+                        <span>
+                            <i>
+                                Toque na mesa para selecioná-la.
+                            </i>
+                        </span>
+                    </Description>
 
-                    <p><FcRotateToPortrait /> Gire o celular para visular melhor as mesas e seus locais no restaurante</p>
                 </DivContainer>
-            </Container>
+
+                <DescriptionDuvidaContainer>
+                    <ButtonDescriptionDuvida onClick={toggleDescription} >
+                        <span>
+                            <FaRegQuestionCircle />
+                            {!showDescription ? `Dúvidas sobre as cores?` : "Ocultar detalhes"}
+                        </span>
+                        {!showDescription ? <IoIosArrowUp size={20} /> : <IoIosArrowDown size={20} />}
+                    </ButtonDescriptionDuvida>
+
+                    {showDescription && (
+                        <DescriptionDuvida>
+                            <DescriptionCores>
+                                <span>
+                                    Mesas disponíveis estão destacadas em{" "}
+                                    <strong style={{ color: "#15ff0050" }}>
+                                        <LuCalendarCheck2 /> Verde
+                                    </strong>
+                                    , ocupadas em{" "}
+                                    <strong style={{ color: "#ff000050" }}>
+                                        <MdOutlineEventBusy /> Vermelho
+                                    </strong>
+                                    , e a mesa selecionada aparecerá em{" "}
+                                    <strong style={{ color: "#0000FF50" }}> Azul</strong>.
+                                </span>
+                            </DescriptionCores>
+                        </DescriptionDuvida>
+                    )}
+                </DescriptionDuvidaContainer>
+
+            </Container >
 
             <ButtonProsseguir
                 onClick={toggleConfirmMesa}
                 style={{ backgroundColor: '#4CAF50', color: '#fff', border: 'none', borderRadius: '5px', padding: '8px' }}
             >
-                Prosseguir
+                Concluir escolha
             </ButtonProsseguir>
+
             <ButtonCallWaiter onClick={callWaiter} disabled={loading}>
                 <MdOutlineReportProblem size={25} />
-                Problemas ao selecionar a mesa? Chame o garçom.
+                Precisa de ajuda?! Clique aqui.
             </ButtonCallWaiter>
 
-            {confirmMesa && (
-                <CartOpenContainer>
-                    <CartOpen
-                        style={{
-                            backgroundColor: '#3F3F3F',
-                            padding: '20px',
-                            borderRadius: '8px',
-                            width: '100%',
-                            maxWidth: '500px',
-                        }}
-                    >
-                        <Title
-                            style={{
-                                fontSize: '1.2rem',
-                                textAlign: 'center',
-                            }}
-                        // id e capacity
-                        >{`Você selecionou a mesa #${selectedTable?.id} para ${selectedTable?.capacity} pessoas. Deseja continuar?`}</Title>
-                        <div
-                            style={{
-                                width: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '1rem',
-                            }}
-                        >
-                            <ButtonOpenConfirm
-                                onClick={() => { handleProsseguir() }}
+            {
+                confirmMesa && (
+                    <ConfirmMesaContainer>
+                        <ConfirmMesa>
+                            <Title style={{ fontSize: '1.2rem', textAlign: 'center' }}>
+                                {`Você selecionou a mesa #${selectedTable?.id} para ${selectedTable?.capacity} pessoas. Deseja continuar?`}
+                            </Title>
+                            <ButtonsActionContainer>
+                                <ButtonOpenConfirm
+                                    onClick={() => { handleProsseguir() }}
 
-                                style={{
-                                    padding: "10px 20px",
-                                    background: '#4CAF50',
-                                }}
-                            >
-                                <FaCheck />
+                                    style={{
+                                        padding: "10px 20px",
+                                        background: '#4CAF50',
+                                    }}
+                                >
+                                    <FaCheck />
 
-                                Confirmar
-                            </ButtonOpenConfirm>
-                            <ButtonOpenCancel
-                                onClick={() => toggleConfirmMesa()}
-                                style={{
-                                    padding: "10px 20px",
-                                }}
-                            >
-                                <IoMdClose />
-                                Fechar
-                            </ButtonOpenCancel>
-                        </div>
-                    </CartOpen>
-                </CartOpenContainer>
-            )}
+                                    Sim
+                                </ButtonOpenConfirm>
+                                <ButtonOpenCancel
+                                    onClick={() => toggleConfirmMesa()}
+                                    style={{
+                                        padding: "10px 20px",
+                                    }}
+                                >
+                                    <IoMdClose />
+                                    Não
+                                </ButtonOpenCancel>
+                            </ButtonsActionContainer>
+                        </ConfirmMesa>
+                    </ConfirmMesaContainer>
+                )
+            }
         </>
     );
 }

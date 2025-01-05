@@ -4,7 +4,6 @@ import { supabase } from '@/services/supabase';
 
 export async function GET(request: Request) {
     try {
-        // Busca todas as mesas com seus respectivos status (livre/ocupada)
         const { data, error } = await supabase
             .from('mesas')
             .select(`

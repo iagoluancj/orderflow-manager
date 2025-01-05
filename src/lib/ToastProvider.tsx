@@ -1,6 +1,6 @@
 "use client";
 
-import { ToastContainer } from "react-toastify";
+import { Id, toast, ToastContainer } from "react-toastify";
 import styled from "styled-components";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -29,6 +29,34 @@ const StyledToastContainer = styled(ToastContainer)`
     border-left: 5px solid #f57c00;
   }
 `;
+
+const activeToasts = new Map<string, Id>(); // Map para rastrear mensagens e IDs
+
+export const showToast = (
+  message: string,
+  type: "success" | "error" | "info" | "warning",
+  options = {}
+) => {
+  // Verifica se a mensagem já está ativa
+  if (!activeToasts.has(message)) {
+    const toastId = toast[type](message, {
+      ...options,
+      onClose: () => {
+        activeToasts.delete(message); 
+      },
+    });
+
+    activeToasts.set(message, toastId);
+  } else {
+    // Caso necessário, atualiza o toast existente 
+    const existingToastId = activeToasts.get(message);
+    if (existingToastId) {
+      toast.update(existingToastId, {
+        ...options,
+      });
+    }
+  }
+};
 
 export default function ToastProvider({ children }: { children: React.ReactNode }) {
   return (

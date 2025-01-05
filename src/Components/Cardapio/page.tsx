@@ -1,6 +1,6 @@
 "use client"
-import { ButtonChamarGarcom, CatalogContainer, Categories, CategoriesContainer, CategoriesHeader, CategoriesList, CategoriesTitle, CategoryImage, CategoryItem, CategoryTitle, H3, Header, HeaderContent, HeaderTexts, HeaderTitle, MenuContainer, MenuItem, MenuItemDescription, MenuItemDetails, MenuItemImage, MenuItemPrice, MenuItemQuantity, MenuItemQuantityContainer, MenuItemTitle, MenuList, MenuTitle, SearchBar, SpanAdd, StyledInput } from "./styles";
-import { useContext, useEffect, useRef, useState } from "react";
+import { ButtonChamarGarcom, CatalogContainer, Categories, CategoriesContainer, CategoriesHeader, CategoriesList, CategoriesTitle, CategoryImage, CategoryItem, CategoryTitle, Header, HeaderContent, HeaderTexts, HeaderTitle, MenuContainer, MenuTitle, SearchBar, StyledInput } from "./styles";
+import React, { createRef, RefObject, useContext, useEffect, useRef, useState } from "react";
 import { Produto, TypeProduto } from "@/Types/types";
 import { toast } from "react-toastify";
 import Cookies from 'js-cookie';
@@ -13,30 +13,40 @@ import carnes from '../../assets/Carnes.png'
 import massas from '../../assets/massas.png'
 import pizzas from '../../assets/Pizza.png'
 import hamburguer from '../../assets/hamburguer.png'
+import salada from '../../assets/salada.png'
 import others from '../../assets/others.png'
 
-import itemHamburguer from '../../assets/item.jpg'
-import itemPizza from '../../assets/pizza.jpg'
-import itemSalada from '../../assets/salada.jpg'
-
 import { SupaContext } from "@/Context";
-import { IoIosAdd, IoIosRemove } from "react-icons/io";
+import CategoryMenu from "./Produtos";
 
-const imageMap: { [key: string]: StaticImageData } = {
-  'Hamburguer': itemHamburguer,
-  'Pizza Margherita': itemPizza,
-  'Salada Caesar': itemSalada,
-};
-
+function getImageByCategory(category: string): StaticImageData {
+  switch (category) {
+    case "Massas":
+      return massas;
+    case "Pizzas":
+      return pizzas;
+    case "Salada":
+      return salada;
+    case "Carnes":
+      return carnes;
+    case "Hamburguer":
+      return hamburguer;
+    default:
+      return others;
+  }
+}
 
 export default function Cardapio() {
   const { cart, addItemToCart, removeItemFromCart } = useContext(SupaContext);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [categories, setCategories] = useState<string[]>([])
   const [items, setItems] = useState<TypeProduto>([]);
   const [selectedImage, setSelectedImage] = useState<StaticImageData | null>(null);
-  const massasRef = useRef<HTMLHeadingElement>(null);
   const mesaId = Cookies.get("mesa");
+
+  const refs = useRef<{ [key: string]: RefObject<HTMLHeadingElement> }>({});
+
 
   const handleImageClick = (image: StaticImageData) => {
     setSelectedImage(image);
@@ -46,10 +56,9 @@ export default function Cardapio() {
     setSelectedImage(null);
   };
 
-  const scrollToMassas = () => {
-    massasRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToCategory = (category: string) => {
+    refs.current[category]?.current?.scrollIntoView({ behavior: "smooth" });
   };
-
 
   const callWaiter = async () => {
     setLoading(true);
@@ -84,6 +93,12 @@ export default function Cardapio() {
   );
 
   useEffect(() => {
+    categories.forEach((category) => {
+      refs.current[category] = refs.current[category] || createRef();
+    });
+  }, [categories]);
+
+  useEffect(() => {
     async function fetchProducts() {
       try {
         const response = await fetch("/api/produtos/get");
@@ -91,6 +106,9 @@ export default function Cardapio() {
 
         if (response.ok) {
           setItems(data.produtos);
+
+          const uniqueCategories = [...new Set(data.produtos.map((item: Produto) => item.categoria))] as string[];
+          setCategories(uniqueCategories);
         } else {
           console.error("Erro ao buscar produtos:", data.message);
         }
@@ -135,97 +153,35 @@ export default function Cardapio() {
                 <CategoriesTitle> Categorias </CategoriesTitle>
               </CategoriesHeader>
               <CategoriesList>
-                <CategoryItem onClick={scrollToMassas}>
-                  <CategoryImage><Image src={massas} alt="Icone de massas"></Image></CategoryImage>
-                  <CategoryTitle>Massas</CategoryTitle>
-                </CategoryItem>
-                <CategoryItem>
-                  <CategoryImage><Image src={pizzas} alt="Icone de massas"></Image></CategoryImage>
-                  <CategoryTitle>Pizzas</CategoryTitle>
-                </CategoryItem>
-                <CategoryItem>
-                  <CategoryImage><Image src={carnes} alt="Icone de massas"></Image></CategoryImage>
-                  <CategoryTitle>Carnes</CategoryTitle>
-                </CategoryItem>
-                <CategoryItem>
-                  <CategoryImage><Image src={hamburguer} alt="Icone de hamburguer"></Image></CategoryImage>
-                  <CategoryTitle>Hamburguer</CategoryTitle>
-                </CategoryItem>
-                <CategoryItem>
-                  <CategoryImage><Image src={others} alt="Icone de outros"></Image></CategoryImage>
-                  <CategoryTitle>Outros</CategoryTitle>
-                </CategoryItem>
+                {categories.map((category) => (
+                  <CategoryItem key={category} onClick={() => scrollToCategory(category)}>
+                    <CategoryImage>
+                      {/* Imagem associada à categoria */}
+                      <Image src={getImageByCategory(category)} alt={`Icone de ${category}`} />
+                    </CategoryImage>
+                    <CategoryTitle>{category}</CategoryTitle>
+                  </CategoryItem>
+                ))}
               </CategoriesList>
             </CategoriesContainer>
           )
         }
         <MenuContainer>
           <MenuTitle>Cardápio</MenuTitle>
-          <H3>Preferidos</H3>
-          <MenuList >
-            {filteredItems.length === 0 ? (
-              <div
-                style={{
-                  padding: '1rem',
-                }}
-              >Nenhum resultado encontrado para {`"Preferidos"`}. Que tal explorar outras opções deliciosas?</div>
-            ) : (
-              filteredItems.map((item: Produto) => {
-                const cartItem = cart.find((cartItem) => cartItem.id === item.id);
-                const itemImage = imageMap[item.nome] || '';
 
-                return (
-                  <MenuItem key={item.id}>
-                    <MenuItemImage><Image src={itemImage} alt={`Image item ${item.nome}`} onClick={() => handleImageClick(itemImage)}></Image></MenuItemImage>
-                    <MenuItemDetails>
-                      <MenuItemTitle>{item.nome}</MenuItemTitle>
-                      <MenuItemDescription>
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit.</MenuItemDescription>
-                      <MenuItemQuantityContainer>
-                        <MenuItemQuantity> <SpanAdd onClick={() => removeItemFromCart(item.id)}> <IoIosRemove />   </SpanAdd>{cartItem ? cartItem.quantidade.toString().padStart(2, '0') : '00'}<SpanAdd onClick={() => addItemToCart(item)}> <IoIosAdd /> </SpanAdd></MenuItemQuantity>
-                        <MenuItemPrice>
-                          R$ {Number(item.preco).toFixed(2).replace('.', ',')} Un.
-                        </MenuItemPrice>
-                      </MenuItemQuantityContainer>
-                    </MenuItemDetails>
-                  </MenuItem>
-                )
-              })
-            )}
-          </MenuList>
-          <H3 ref={massasRef}>Massas</H3>
-          <MenuList>
-            {filteredItems.length === 0 ? (
-              <div
-                style={{
-                  padding: '1rem',
-                }}
-              >Nenhum resultado encontrado para {`"Massas"`}. Que tal explorar outras opções deliciosas?</div>
-            ) : (
-              filteredItems.map((item: Produto) => {
-                const cartItem = cart.find((cartItem) => cartItem.id === item.id);
-                const itemImage = imageMap[item.nome] || '';
-
-                return (
-                  <MenuItem key={item.id}>
-                    <MenuItemImage><Image src={itemImage} alt={`Image item ${item.nome}`}></Image></MenuItemImage>
-                    <MenuItemDetails>
-                      <MenuItemTitle>{item.nome}</MenuItemTitle>
-                      <MenuItemDescription>
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                      </MenuItemDescription>
-                      <MenuItemQuantityContainer>
-                        <MenuItemQuantity> <SpanAdd onClick={() => removeItemFromCart(item.id)}> <IoIosRemove />   </SpanAdd>{cartItem ? cartItem.quantidade.toString().padStart(2, '0') : '00'}<SpanAdd onClick={() => addItemToCart(item)}> <IoIosAdd /> </SpanAdd></MenuItemQuantity>
-                        <MenuItemPrice>
-                          R$ {Number(item.preco).toFixed(2).replace('.', ',')} Un.
-                        </MenuItemPrice>
-                      </MenuItemQuantityContainer>
-                    </MenuItemDetails>
-                  </MenuItem>
-                )
-              })
-            )}
-          </MenuList>
+          {categories.map((category) => (
+            <CategoryMenu
+              key={category}
+              title={category}
+              category={category}
+              filteredItems={filteredItems}
+              cart={cart}
+              addItemToCart={addItemToCart}
+              removeItemFromCart={removeItemFromCart}
+              handleImageClick={handleImageClick}
+              refProp={refs.current[category]}
+            />
+          ))}
 
         </MenuContainer>
       </Categories>
@@ -234,6 +190,7 @@ export default function Cardapio() {
         <FaConciergeBell size={24} />
         {loading ? "Aguarde.." : "Garçom"}
       </ButtonChamarGarcom>
+
       {selectedImage && (
         <div className="modal" onClick={closeModal}>
           <div className="modal-content">

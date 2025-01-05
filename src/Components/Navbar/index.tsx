@@ -3,7 +3,7 @@ import { ButtonOpenCancel, ButtonOpenConfirm, CartOpen, CartOpenContainer, Conta
 import { LuLogOut } from 'react-icons/lu';
 import { usePathname, useRouter } from 'next/navigation';
 import logo from '../../assets/logo.png'
-import Image, { StaticImageData } from 'next/image';
+import Image from 'next/image';
 import { FaOpencart, FaShoppingBasket } from 'react-icons/fa';
 import { IoIosAdd, IoIosRemove, IoMdMenu } from 'react-icons/io';
 import { CartItem, TypeItemPedido, TypePedido } from '@/Types/types';
@@ -13,10 +13,9 @@ import { toast } from 'react-toastify';
 import { MdAttachMoney, MdOutlineTableBar } from 'react-icons/md';
 import { MenuItem, MenuItemDescription, MenuItemDetails, MenuItemImage, MenuItemPrice, MenuItemQuantity, MenuItemQuantityContainer, MenuItemTitle, SpanAdd, Title } from '../Cardapio/styles';
 
-import itemHamburguer from '../../assets/item.jpg'
-import itemPizza from '../../assets/pizza.jpg'
-import itemSalada from '../../assets/salada.jpg'
+
 import PedidosEItens from '../PedidosEItens';
+import { imageMap } from '../Cardapio/Produtos/images';
 
 
 interface NavbarProps {
@@ -26,11 +25,7 @@ interface NavbarProps {
     deleteAll?: boolean;
 }
 
-const imageMap: { [key: string]: StaticImageData } = {
-    'Hamburguer': itemHamburguer,
-    'Pizza Margherita': itemPizza,
-    'Salada Caesar': itemSalada,
-};
+
 
 const NavbarComponent: React.FC<NavbarProps> = ({ message, cartQt = 0, isGarcom, deleteAll }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);

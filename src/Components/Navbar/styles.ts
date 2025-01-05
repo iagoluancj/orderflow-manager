@@ -157,10 +157,10 @@ export const NavButton = styled.button`
 `;
 
 export const NavButtonOrder = styled(NavButton)`
-  background: var(--realceHover);
+  background: var(--emAndamento);
 &:hover {
-  border: 1px solid var(--realceHover);
-  color: var(--realceHover);
+  border: 1px solid var(--emAndamento);
+  color: var(--emAndamento);
   }
 `
 

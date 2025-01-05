@@ -46,7 +46,7 @@ const SupaProvider: React.FC<SupaProviderProps> = ({ children }) => {
 
     const [clientes, setClientes] = useState<TypeCliente[]>([]);
     const [pedidos, setPedidos] = useState<TypePedido[]>([]);
-    const [itensPedido, setItensPedido] = useState<TypeItemPedido[]>([]); //Essa não é a melhor forma, a melhor forma é buscar o pedido por id. 
+    const [itensPedido, setItensPedido] = useState<TypeItemPedido[]>([]);
     const [funcionarios, setFuncionarios] = useState<TypeFuncionario[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
 
